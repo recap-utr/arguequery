@@ -39,8 +39,9 @@ def run() -> None:
     nltk.download("punkt")
     Embeddings.get_instance()
 
-    app_name = "MirkoLenz/Bachelor-Thesis-Code"
-    app = flask.Flask(app_name, root_path=os.path.abspath(os.path.dirname(__file__)))
+    app = flask.Flask(
+        config["app_name"], root_path=os.path.abspath(os.path.dirname(__file__))
+    )
     app.config.update(TEMPLATES_AUTO_RELOAD=True, FLASK_ENV="development")
     app.secret_key = os.urandom(16)
 
@@ -166,7 +167,6 @@ def run() -> None:
         return flask.render_template(
             "index.html",
             config=config,
-            app_name=app_name,
             embeddings=Embeddings.keys(),
             query_file_name=query_file_name,
             fac_results=fac_results,

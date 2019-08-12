@@ -54,3 +54,5 @@ use_schemes: false
 use_ontology: false
 
 number_of_runs: 1
+
+app_name: "MirkoLenz/ReCAP-Argument-Graph-Retrieval"
