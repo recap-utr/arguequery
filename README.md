@@ -5,32 +5,14 @@ It provides a retrieval for argumentation graphs.
 
 ## System Requirements
 
-- Python 3.7 (Use [pyenv](https://github.com/pyenv/pyenv) for multiple versions)
-- [Poetry](https://github.com/sdispater/poetry)
+- Docker and Docker-Compose
 
 ## Installation
 
 ### Application
 
-_Please note:_ The `x` in the following command needs to be replaced with a specific version number.
-
-It is important to select a version of Python 3.7 as the active interpreter before installing the packages.
-Otherwise, poetry will use the system default Python version (which is most likely Python 2.x).
-
-```shell
-pyenv install 3.7.x
-pyenv local 3.7.x
-```
-
-The dependencies itself can be installed via Poetry.
-It also creates a virtual environment to avoid package version errors.
-
-```shell
-poetry install
-```
-
-Lastly, duplicate the file `config_example.yml` to `config.yml` and adapt the settings to your liking.
-
+Duplicate the file `config_example.yml` to `config.yml` and adapt the settings to your liking.
+Please do not edit the webserver settings as Docker depends on them.
 
 
 ### Embeddings
@@ -70,10 +52,12 @@ It is recommended to rename the files to a memorable name and put them in a fold
 
 It is possible to run the software with
 
-```poetry run python -m recap_agr```
+```docker-compose up```
 
-This will start a web server using Flask and the parameters given in `config.yml`.
-The terminal will show the complete URL to access the interface.
+This will download all required data on the first run and thus may take a while.
+Future runs are cached and the app available immediately.
+
+The webserver is then accessible on <http://localhost:8888>
 
 
 
