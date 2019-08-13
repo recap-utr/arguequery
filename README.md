@@ -22,19 +22,19 @@ It is recommended to rename the files to a memorable name and put them in a fold
 
 - [Google Word2Vec:](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing)
   - Mikolov, T., Sutskever, I., Chen, K., Corrado, G., Dean, J.: Distributed Representations of Words and Phrases and their Compositionality (2013), <https://arxiv.org/abs/1310.4546>
-  - `poetry run python -m recap_agr.cli.convert bytes-text path/to/GoogleNews-vectors-negative300.bin.gz`
-  - `poetry run python -m recap_agr.cli.convert model-gensim path/to/GoogleNews-vectors-negative300.txt`
+  - `docker-compose run --rm app python -m recap_agr.cli.convert bytes-text path/to/GoogleNews-vectors-negative300.bin.gz`
+  - `docker-compose run --rm app python -m recap_agr.cli.convert model-gensim path/to/GoogleNews-vectors-negative300.txt`
 - Custom Doc2Vec: Not yet available.
 - [fastText:](https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip)
   - Bojanowski, P., Grave, E., Joulin, A., Mikolov, T.: Enriching Word Vectors with Subword Information (2016), <https://arxiv.org/abs/1607.04606>
   - Unpack the file.
-  - `poetry run python -m recap_agr.cli.convert model-gensim path/to/crawl-300d-2M.vec`
+  - `docker-compose run --rm app python -m recap_agr.cli.convert model-gensim path/to/crawl-300d-2M.vec`
 - [GloVe:](http://nlp.stanford.edu/data/glove.840B.300d.zip)
   - Pennington, J., Socher, R., Manning, C.: Glove: Global Vectors for Word Representation. In: Proceedings of EMNLP (2014). <https://doi.org/10.3115/v1/D14-1162>
   - Unpack the file.
   - Run `cat path/to/glove.6B.300d.txt | wc -l` to obtain the number of items.
   - Add `#LINES 300` as the first line of the file, e.g. `1000 300` if the output above gave 1000 (recommended to use `vim`).
-  - `poetry run python -m recap_agr.cli.convert model-gensim path/to/glove.6B.300d.txt`
+  - `docker-compose run --rm app python -m recap_agr.cli.convert model-gensim path/to/glove.6B.300d.txt`
 - [Infersent:](https://dl.fbaipublicfiles.com/infersent/infersent1.pkl)
   - Conneau, A., Kiela, D., Schwenk, H., Barrault, L., Bordes, A.: Supervised Learning of Universal Sentence Representations from Natural Language Inference Data (2017), <https://arxiv.org/abs/1705.02364>
   - No modification needed.

@@ -6,6 +6,6 @@ services:
     ports:
       - "8888:80"
     volumes:
-      - .:/workspace
+      - .:/app
     command: python -m recap_agr
-    working_dir: "/workspace"
+    working_dir: "/app"
