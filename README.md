@@ -1,5 +1,7 @@
 # ReCAP: Argument Graph Retrieval
 
+[![DOI](https://zenodo.org/badge/192173055.svg)](https://zenodo.org/badge/latestdoi/192173055)
+
 This program has been used to perform the evaluation for my Bachelor's Thesis.
 It provides a retrieval for argumentation graphs.
 
