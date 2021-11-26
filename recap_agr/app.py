@@ -80,8 +80,8 @@ def run() -> None:
                         for filename in sorted(os.listdir(config["queries_folder"])):
                             if filename.endswith(".json"):
                                 with open(
-                                    os.path.join(config["queries_folder"], filename),
-                                    "r",
+                                        os.path.join(config["queries_folder"], filename),
+                                        "r",
                                 ) as file:
                                     query_files[filename] = file.read()
 

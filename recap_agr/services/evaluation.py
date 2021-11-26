@@ -72,7 +72,7 @@ class Evaluation(object):
                 data = json.load(file)
                 self.user_candidates = data["candidates"]
                 self.user_rankings = data["rankings"]
-        except:
+        except Exception:
             self.user_candidates = []
             self.user_rankings = {}
 
