@@ -12,7 +12,7 @@ import scipy
 import tensorflow as tf
 import tensorflow_hub as hub
 import torch
-from recap_agr.config import config
+from arguequery.config import config
 
 from ..libs.infersent import InferSent
 from ..libs.sif import sif

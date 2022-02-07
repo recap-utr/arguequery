@@ -17,7 +17,7 @@ from ..models.nlp import Embedding
 from ..services import utils
 
 logger = logging.getLogger("recap")
-from recap_agr.config import config
+from arguequery.config import config
 
 
 def jsonobj2graph(json_data: Dict[str, Any], filename: str) -> Graph:

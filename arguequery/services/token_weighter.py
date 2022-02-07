@@ -4,11 +4,11 @@ import math
 from collections import defaultdict
 from typing import Dict, List, Set
 
+from arguequery.config import config
+
 from ..libs.sif import SifWeights
 from ..models.graph import Graph
 from ..services import utils
-
-from recap_agr.config import config
 
 
 class TokenWeighter(object):

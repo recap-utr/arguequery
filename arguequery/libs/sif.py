@@ -1,12 +1,11 @@
 from __future__ import absolute_import, annotations
 
+from collections import defaultdict
 from typing import Dict, List
 
 import numpy as np
+from arguequery.config import config
 from sklearn.decomposition import TruncatedSVD
-from collections import defaultdict
-
-from recap_agr.config import config
 
 
 def get_weighted_average(We, x, w):

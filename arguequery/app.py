@@ -29,7 +29,7 @@ logger.setLevel(logging.INFO)
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.WARNING)
 
-from recap_agr.config import config
+from arguequery.config import config
 
 
 def run() -> None:

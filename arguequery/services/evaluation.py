@@ -13,7 +13,7 @@ from ..models.result import Result
 from ..services import utils
 
 logger = logging.getLogger("recap")
-from recap_agr.config import config
+from arguequery.config import config
 
 
 class Evaluation(object):

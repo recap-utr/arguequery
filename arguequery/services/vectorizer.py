@@ -17,7 +17,7 @@ from ..services import utils
 from ..services.token_weighter import TokenWeighter
 
 logger = logging.getLogger("recap")
-from recap_agr.config import config
+from arguequery.config import config
 
 
 @dataclass

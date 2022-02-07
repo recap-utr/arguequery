@@ -4,7 +4,7 @@ import bisect
 import logging
 import multiprocessing
 import random
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 from ..models.graph import Edge, Graph, Node
 from ..models.mapping import Mapping, SearchNode
@@ -13,7 +13,7 @@ from ..services import utils
 from ..services.similarity import Similarity
 
 logger = logging.getLogger("recap")
-from recap_agr.config import config
+from arguequery.config import config
 
 
 def fac(mac_results: List[Result], query_graph: Graph) -> List[Result]:

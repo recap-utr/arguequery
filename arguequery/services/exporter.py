@@ -15,7 +15,7 @@ from ..services import utils
 from ..services.evaluation import Evaluation
 
 logger = logging.getLogger("recap")
-from recap_agr.config import config
+from arguequery.config import config
 
 
 def get_results(results: List[Result]) -> List[Dict[str, Any]]:
