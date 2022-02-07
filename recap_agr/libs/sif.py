@@ -6,9 +6,7 @@ import numpy as np
 from sklearn.decomposition import TruncatedSVD
 from collections import defaultdict
 
-from ..services.utils import Config
-
-config = Config.get_instance()
+from recap_agr.config import config
 
 
 def get_weighted_average(We, x, w):
@@ -93,13 +91,13 @@ class SifWeights:
 
     @staticmethod
     def get_instance():
-        """ Static access method. """
+        """Static access method."""
         if SifWeights._instance == None:
             SifWeights()
         return SifWeights._instance
 
     def __init__(self):
-        """ Virtually private constructor. """
+        """Virtually private constructor."""
         if SifWeights._instance != None:
             raise Exception("This class is a singleton!")
         else:

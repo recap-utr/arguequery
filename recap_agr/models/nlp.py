@@ -12,15 +12,14 @@ import scipy
 import tensorflow as tf
 import tensorflow_hub as hub
 import torch
+from recap_agr.config import config
 
 from ..libs.infersent import InferSent
 from ..libs.sif import sif
 from ..models.graph import Graph
 from ..services.token_weighter import TokenWeighter
-from ..services.utils import Config
 
 logger = logging.getLogger("recap")
-config = Config.get_instance()
 
 
 class Embeddings(object):
@@ -31,7 +30,7 @@ class Embeddings(object):
 
     @staticmethod
     def get_instance():
-        """ Static access method. """
+        """Static access method."""
         if Embeddings._instance == None:
             Embeddings()
 
@@ -49,7 +48,7 @@ class Embeddings(object):
         return Embeddings._instance.keys()
 
     def __init__(self):
-        """ Virtually private constructor. """
+        """Virtually private constructor."""
         if Embeddings._instance != None:
             raise Exception("This class is a singleton!")
         else:

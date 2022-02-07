@@ -16,7 +16,7 @@ from ..services import utils
 
 logger = logging.getLogger("recap")
 
-config = utils.Config.get_instance()
+from recap_agr.config import config
 
 
 class Similarity(object):
@@ -27,13 +27,13 @@ class Similarity(object):
 
     @staticmethod
     def get_instance():
-        """ Static access method. """
+        """Static access method."""
         if Similarity._instance == None:
             Similarity()
         return Similarity._instance
 
     def __init__(self):
-        """ Virtually private constructor. """
+        """Virtually private constructor."""
         if Similarity._instance != None:
             raise Exception("This class is a singleton!")
         else:

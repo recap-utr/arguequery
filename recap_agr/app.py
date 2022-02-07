@@ -12,6 +12,7 @@ import flask
 import gensim
 import nltk
 
+from .cli.texify import texify
 from .models.graph import Graph
 from .models.nlp import Embeddings
 from .models.ontology import Ontology
@@ -21,7 +22,6 @@ from .services.evaluation import Evaluation
 from .services.similarity import Similarity
 from .services.token_weighter import TokenWeighter
 from .services.vectorizer import Vectorizer
-from .cli.texify import texify
 
 logger = logging.getLogger("recap")
 logger.setLevel(logging.INFO)
@@ -29,7 +29,7 @@ logger.setLevel(logging.INFO)
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.WARNING)
 
-config = utils.Config.get_instance()
+from recap_agr.config import config
 
 
 def run() -> None:
@@ -80,8 +80,8 @@ def run() -> None:
                         for filename in sorted(os.listdir(config["queries_folder"])):
                             if filename.endswith(".json"):
                                 with open(
-                                        os.path.join(config["queries_folder"], filename),
-                                        "r",
+                                    os.path.join(config["queries_folder"], filename),
+                                    "r",
                                 ) as file:
                                     query_files[filename] = file.read()
 
@@ -149,7 +149,7 @@ def run() -> None:
 
                     if config["export_results_aggregated"]:
                         exporter.export_results_aggregated(
-                            eval_dict, duration, **config._config
+                            eval_dict, duration, **config
                         )
                         if config["texify"]:
                             texify()

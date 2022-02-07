@@ -13,7 +13,7 @@ from ..services import utils
 from ..services.similarity import Similarity
 
 logger = logging.getLogger("recap")
-config = utils.Config.get_instance()
+from recap_agr.config import config
 
 
 def fac(mac_results: List[Result], query_graph: Graph) -> List[Result]:

@@ -7,8 +7,8 @@ import os
 import re
 from xml.etree import cElementTree as ET
 
-import click
 import gensim
+import typer
 
 logger = logging.getLogger("recap")
 logger.setLevel(logging.INFO)
@@ -21,14 +21,10 @@ To remove the first line from gzipped files, run the following command:
     gzip -dc $file | tail +2 | gzip -c > $file_new
 """
 
-
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
-def main() -> None:
-    pass
+app = typer.Typer()
 
 
-@main.command()
-@click.argument("folder")
+@app.command()
 def xml_json(folder: str) -> None:
     """Convert XML to JSON.
 
@@ -93,13 +89,7 @@ def xml_json(folder: str) -> None:
             json.dump(json_data, file, indent=4)
 
 
-@main.command()
-@click.argument("file")
-@click.option(
-    "--pattern",
-    help="Regex pattern that should be searched for in that file.",
-    required=True,
-)
+@app.command()
 def multilingual_monolingual(file: str, pattern: str) -> None:
     """Convert multilingual file to monolingual.
 
@@ -141,8 +131,7 @@ def multilingual_monolingual(file: str, pattern: str) -> None:
                     fout.write(out.encode())
 
 
-@main.command()
-@click.argument("file")
+@app.command()
 def bytes_text(file: str) -> None:
     """Convert binary model to text model.
 
@@ -163,8 +152,7 @@ def bytes_text(file: str) -> None:
     word_vectors.save_word2vec_format(file_out)
 
 
-@main.command()
-@click.argument("file")
+@app.command()
 def model_gensim(file: str) -> None:
     """Convert model to gensim format.
 
@@ -194,4 +182,4 @@ def model_gensim(file: str) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    app()

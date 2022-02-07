@@ -17,7 +17,7 @@ from ..models.nlp import Embedding
 from ..services import utils
 
 logger = logging.getLogger("recap")
-config = utils.Config.get_instance()
+from recap_agr.config import config
 
 
 def jsonobj2graph(json_data: Dict[str, Any], filename: str) -> Graph:
@@ -70,7 +70,9 @@ def jsonobj2graph(json_data: Dict[str, Any], filename: str) -> Graph:
     return graph
 
 
-def jsonfile2graph(filepath: str,) -> Graph:
+def jsonfile2graph(
+    filepath: str,
+) -> Graph:
     """Read a single json file and import the contents to a graph model"""
 
     graph = None

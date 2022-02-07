@@ -8,7 +8,7 @@ from ..libs.sif import SifWeights
 from ..models.graph import Graph
 from ..services import utils
 
-config = utils.Config.get_instance()
+from recap_agr.config import config
 
 
 class TokenWeighter(object):

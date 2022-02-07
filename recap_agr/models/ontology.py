@@ -6,9 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from ruamel import yaml
 
-from ..services.utils import Config
-
-config = Config.get_instance()
+from recap_agr.config import config
 
 
 @dataclass
@@ -34,13 +32,13 @@ class Ontology(object):
 
     @staticmethod
     def get_instance():
-        """ Static access method. """
+        """Static access method."""
         if Ontology._instance == None:
             Ontology()
         return Ontology._instance
 
     def __init__(self) -> None:
-        """ Virtually private constructor. """
+        """Virtually private constructor."""
         if Ontology._instance != None:
             raise Exception("This class is a singleton!")
         else:

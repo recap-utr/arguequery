@@ -5,25 +5,16 @@ description = ""
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-numpy = "^1.16"
-scipy = "^1.3"
-gensim = "^3.7"
-flask = "^1.0"
-click = "^7.0"
-nltk = "^3.4"
-"ruamel.yaml" = "^0.15.96"
-sklearn = "^0.0.0"
-tensorflow = "^1.13"
-tensorflow-hub = "^0.4.0"
-torch = "^1.1"
-numba = "^0.44.0"
-
-[tool.poetry.dev-dependencies]
-pytest = "^3.0"
-black = "=19.3b0"
-mypy = "^0.701.0"
-pylint = "^2.3"
+python = "^3.8,<3.11"
+numpy = "^1.22.2"
+scipy = "^1.8.0"
+gensim = "^4.1.2"
+Flask = "^2.0.2"
+typer = "^0.4.0"
+nltk = "^3.6.7"
+dynaconf = "^3.1.7"
+arguebuf = "^0.2.12"
+nlp-service = "^0.1.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

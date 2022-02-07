@@ -15,7 +15,7 @@ from ..services import utils
 from ..services.evaluation import Evaluation
 
 logger = logging.getLogger("recap")
-config = utils.Config.get_instance()
+from recap_agr.config import config
 
 
 def get_results(results: List[Result]) -> List[Dict[str, Any]]:
@@ -82,7 +82,7 @@ def export_results(
 
 
 def get_results_aggregated(
-    evaluations: List[Evaluation]
+    evaluations: List[Evaluation],
 ) -> Dict[str, Dict[str, float]]:
     """Return multiple evaluations as an aggregated dictionary."""
 

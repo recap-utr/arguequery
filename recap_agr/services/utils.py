@@ -8,59 +8,14 @@ from typing import Any, Dict, Generator, List, Set, Tuple
 
 import nltk
 import numpy as np
-from ruamel import yaml
 import tensorflow as tf
 
 logger = logging.getLogger("recap")
 
 
-class Config:
-    """Store general application settings as a singleton"""
-
-    # Here will be the instance stored.
-    _instance = None
-    _config: Dict[str, Any]
-    _config_error = "The key is not defined in 'config.yml'. This is most likely caused by an old version of that file. Look at 'config_example.yml' to see all options."
-
-    @staticmethod
-    def get_instance():
-        """ Static access method. """
-        if Config._instance == None:
-            Config()
-        return Config._instance
-
-    def __init__(self):
-        """ Virtually private constructor. """
-        if Config._instance != None:
-            raise Exception("This class is a singleton!")
-        else:
-            Config._instance = self
-            with open("config.yml", "r") as f:
-                self._config = yaml.safe_load(f)
-
-    def items(self):
-        return self._config.items()
-
-    def __getitem__(self, key: str):
-        if key in self._config:
-            return self._config[key]
-        else:
-            raise ValueError(
-                f"Accessing config '{key}' not possible.", self._config_error
-            )
-
-    def __setitem__(self, key: str, value: str):
-        if key in self._config:
-            self._config[key] = value
-        else:
-            raise ValueError(
-                f"Accessing config '{key}' not possible.", self._config_error
-            )
-
-
 def preprocess_text(text: str) -> str:
     # TODO: Check for german texts
-    # config = Config.get_instance()
+    #
     # out = text.lower() if config["lowercase"] else text
 
     # return out.translate(get_umlauts_map())
@@ -70,7 +25,6 @@ def preprocess_text(text: str) -> str:
 def get_tokens(text: str) -> List[str]:
     """Split a string into a set of unique tokens"""
 
-    config = Config.get_instance()
     text_normalized = preprocess_text(text)
     tokens = nltk.word_tokenize(text_normalized, config["language"])
 
@@ -86,7 +40,7 @@ def get_tokens(text: str) -> List[str]:
 
 
 def get_stemmer():
-    config = Config.get_instance()
+
     return (
         nltk.stem.snowball.GermanStemmer()
         if config["language"] == "german"
