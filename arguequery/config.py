@@ -1,6 +1,8 @@
+from typing import Any
+
 from dynaconf import Dynaconf
 
-config = Dynaconf(
+config: Any = Dynaconf(
     envvar_prefix="DYNACONF",
     settings_files=["settings.toml", ".secrets.toml"],
 )

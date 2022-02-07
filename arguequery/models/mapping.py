@@ -2,163 +2,140 @@ from __future__ import absolute_import, annotations
 
 import copy
 import logging
-from typing import Dict, List, Optional, Tuple, Any
-
+import typing as t
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..models.graph import Edge, Graph, Node
-from ..services.similarity import Similarity
+import arguebuf as ag
+from arguequery.services import nlp
 
 logger = logging.getLogger("recap")
 
 
-@dataclass
-class NodeMapping(object):
+@dataclass(frozen=True, eq=True)
+class NodeMapping:
     """Store query and case node"""
 
-    nq: Node
-    nc: Node
-
-    def __eq__(self, other):
-        return self.nc.id_ == other.nc.id_ and self.nq.id_ == other.nq.id_
+    query: ag.Node
+    case: ag.Node
 
 
-@dataclass
-class EdgeMapping(object):
+@dataclass(frozen=True, eq=True)
+class EdgeMapping:
     """Store query and case edge"""
 
-    eq: Edge
-    ec: Edge
-
-    def __eq__(self, other):
-        return self.ec.id_ == other.ec.id_ and self.eq.id_ == other.eq.id_
+    query: ag.Edge
+    case: ag.Edge
 
 
 @dataclass
-class Mapping(object):
+class Mapping:
     """Store all mappings and perform integrity checks on them"""
 
-    node_mappings: List[NodeMapping] = field(default_factory=list)
-    edge_mappings: List[EdgeMapping] = field(default_factory=list)
-    similarity: float = field(default=0.0, init=False)
+    available_nodes: int
+    available_edges: int
+    node_mappings: t.Set[NodeMapping] = field(default_factory=set)
+    edge_mappings: t.Set[EdgeMapping] = field(default_factory=set)
 
-    def _is_node_mapped(self, nc: Node) -> bool:
+    def _is_node_mapped(self, nc: ag.Node) -> bool:
         """Check if given node is already mapped"""
 
-        nc_list = [node.nc.id_ for node in self.node_mappings]
+        return nc in self.node_mappings
 
-        return nc.id_ in nc_list
-
-    def _is_edge_mapped(self, ec: Edge) -> bool:
+    def _is_edge_mapped(self, ec: ag.Edge) -> bool:
         """Check if given edge is already mapped"""
 
-        ec_list = [edge.ec.id_ for edge in self.edge_mappings]
+        return ec in self.edge_mappings
 
-        return ec.id_ in ec_list
-
-    def _are_nodes_mapped(self, nq: Node, nc: Node) -> bool:
+    def _are_nodes_mapped(self, nq: ag.Node, nc: ag.Node) -> bool:
         """Check if the two given nodes are mapped to each other"""
 
-        mapping = NodeMapping(nq, nc)
+        return NodeMapping(nq, nc) in self.node_mappings
 
-        return mapping in self.node_mappings
-
-    def is_legal_mapping(self, q: Any, c: Any) -> bool:
+    def is_legal_mapping(
+        self, q: t.Union[ag.Node, ag.Edge], c: t.Union[ag.Node, ag.Edge]
+    ) -> bool:
         """Check if mapping is legal"""
 
-        if isinstance(q, Node):
+        if isinstance(q, ag.Node) and isinstance(c, ag.Node):
             return self.is_legal_node_mapping(q, c)
-        elif isinstance(q, Edge):
+        elif isinstance(q, ag.Edge) and isinstance(c, ag.Edge):
             return self.is_legal_edge_mapping(q, c)
         return False
 
-    def is_legal_node_mapping(self, nq: Node, nc: Node) -> bool:
+    def is_legal_node_mapping(self, nq: ag.Node, nc: ag.Node) -> bool:
         """Check if mapping is legal"""
 
-        is_legal_mapping = True
+        return not (self._is_node_mapped(nc) or type(nc) != type(nq))
 
-        if self._is_node_mapped(nc) or nc.type_ != nq.type_:
-            is_legal_mapping = False
-
-        return is_legal_mapping
-
-    def is_legal_edge_mapping(self, eq: Edge, ec: Edge) -> bool:
+    def is_legal_edge_mapping(self, eq: ag.Edge, ec: ag.Edge) -> bool:
         """Check if mapping is legal"""
 
-        is_legal_mapping = True
-
-        if (
+        return not (
             self._is_edge_mapped(ec)
-            or (
-                ec.from_node.type_ != eq.from_node.type_
-                and ec.to_node.type_ != eq.to_node.type_
-            )
-            or (
-                not self._are_nodes_mapped(eq.from_node, ec.from_node)
-                and not self._are_nodes_mapped(eq.to_node, ec.to_node)
-            )
-        ):
-            is_legal_mapping = False
+            or not self.is_legal_node_mapping(eq.source, ec.source)
+            or not self.is_legal_node_mapping(eq.target, ec.target)
+        )
 
-        return is_legal_mapping
-
-    def map(self, q: Any, c: Any) -> None:
+    def map(self, q: t.Union[ag.Node, ag.Edge], c: t.Union[ag.Node, ag.Edge]) -> None:
         """Create a new mapping"""
 
-        if isinstance(q, Node):
+        if isinstance(q, ag.Node) and isinstance(c, ag.Node):
             self.map_nodes(q, c)
-        elif isinstance(q, Edge):
+
+        elif isinstance(q, ag.Edge) and isinstance(c, ag.Edge):
             self.map_edges(q, c)
 
-    def map_nodes(self, nq: Node, nc: Node) -> None:
+    def map_nodes(self, nq: ag.Node, nc: ag.Node) -> None:
         """Create new node mapping"""
 
-        self.node_mappings.append(NodeMapping(nq, nc))
+        self.node_mappings.add(NodeMapping(nq, nc))
 
-    def map_edges(self, eq: Edge, ec: Edge) -> None:
+    def map_edges(self, eq: ag.Edge, ec: ag.Edge) -> None:
         """Create new edge mapping"""
 
-        self.edge_mappings.append(EdgeMapping(eq, ec))
+        self.edge_mappings.add(EdgeMapping(eq, ec))
 
-    def get_similarity(self, n_nodes: int, n_edges: int) -> float:
+    @property
+    def similarity(self) -> float:
         """Compute similarity for all edge and node mappings"""
 
-        if not self.similarity:
-            node_sim = 0.0
-            edge_sim = 0.0
-            similarity = Similarity.get_instance()
+        node_sim = sum(
+            nlp.similarity(mapping.case, mapping.query)
+            for mapping in self.node_mappings
+        )
+        edge_sim = sum(
+            nlp.similarity(mapping.case, mapping.query)
+            for mapping in self.edge_mappings
+        )
 
-            for nm in self.node_mappings:
-                node_sim += similarity.node_similarity(nm.nc, nm.nq)
-
-            for em in self.edge_mappings:
-                edge_sim += similarity.edge_similarity(em.ec, em.eq)
-
-            self.similarity = (node_sim + edge_sim) / (n_nodes + n_edges)
-
-        return self.similarity
+        return (node_sim + edge_sim) / (self.available_nodes + self.available_edges)
 
 
-class SearchNode(object):
+class SearchNode:
     """Specific search node"""
 
     def __init__(
         self,
-        nodes: Dict[int, Node],
-        edges: Dict[int, Edge],
+        available_nodes: int,
+        available_edges: int,
+        nodes: t.Iterable[ag.Node],
+        edges: t.Iterable[ag.Edge],
         mapping_old: Mapping = None,
     ) -> None:
-        self.nodes = copy.copy(nodes)
-        self.edges = copy.copy(edges)
+        self.nodes = set(nodes)
+        self.edges = set(edges)
         self.f = 1.0
 
         if mapping_old:
             self.mapping = Mapping(
-                copy.copy(mapping_old.node_mappings),
-                copy.copy(mapping_old.edge_mappings),
+                available_nodes,
+                available_edges,
+                set(mapping_old.node_mappings),
+                set(mapping_old.edge_mappings),
             )
         else:
-            self.mapping = Mapping()
+            self.mapping = Mapping(available_nodes, available_edges)
 
     def __lt__(self, other) -> bool:
         return self.f < other.f
@@ -175,8 +152,9 @@ class SearchNode(object):
     def __eq__(self, other) -> bool:
         return self.f == other.f
 
-    def remove(self, key_q: int, x_q: Any) -> None:
-        if isinstance(x_q, Node):
-            del self.nodes[key_q]
-        elif isinstance(x_q, Edge):
-            del self.edges[key_q]
+    def remove(self, q: t.Union[ag.Node, ag.Edge]) -> None:
+        if isinstance(q, ag.Node):
+            self.nodes.remove(q)
+
+        elif isinstance(q, ag.Edge):
+            self.edges.remove(q)

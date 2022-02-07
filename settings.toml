@@ -1,9 +1,6 @@
 # If true, only one thread will be used (which decreases performance)
 debug = false
 
-# If true, TeX values for tables will be copied to the clipboard
-texify = false
-
 # Language is needed for stopwords (english/german)
 language = "english"
 
@@ -13,6 +10,7 @@ queries_folder = "data/queries/english/microtexts-annotated"
 embeddings_folder = "data/embeddings/english"
 candidates_folder = "data/candidates/microtexts"
 results_folder = "data/results"
+ontology = "ontology.yml"
 
 # File names
 embeddings_supervised = ["infersent.pkl", "use-d", "use-t"]

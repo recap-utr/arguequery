@@ -1,15 +1,17 @@
-from __future__ import absolute_import, annotations
+from __future__ import annotations
 
 import math
+import typing as t
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+import arguebuf as ag
+import yaml
 from arguequery.config import config
-from ruamel import yaml
 
 
 @dataclass
-class OntologyNode(object):
+class OntologyNode:
     """Store values for one node of the ontology"""
 
     value: str
@@ -22,7 +24,7 @@ class OntologyNode(object):
             self.parent.children.append(self)
 
 
-class Ontology(object):
+class Ontology:
     """Store ontology as singleton"""
 
     _instance = None
@@ -30,36 +32,41 @@ class Ontology(object):
     root_node: Optional[OntologyNode]
 
     @staticmethod
-    def get_instance():
+    def instance() -> Ontology:
         """Static access method."""
-        if Ontology._instance == None:
+
+        if Ontology._instance is None:
             Ontology()
+
+        assert Ontology._instance is not None
+
         return Ontology._instance
 
     def __init__(self) -> None:
         """Virtually private constructor."""
-        if Ontology._instance != None:
+
+        if Ontology._instance is not None:
             raise Exception("This class is a singleton!")
-        else:
-            Ontology._instance = self
-            with open("ontology.yml", "r") as f:
-                self._load_ontology(yaml.safe_load(f))
+
+        Ontology._instance = self
+
+        with open(config.ontology, "r") as f:
+            self._load_ontology(yaml.safe_load(f))
 
     def _load_ontology(
         self, nodes_dict: Dict[str, Any], parent: OntologyNode = None, depth: int = 0
     ) -> None:
         if nodes_dict is not None:
-            current_node = self.add_node(nodes_dict["val"], depth, parent)
+            current_node = self._add_node(nodes_dict["val"], depth, parent)
 
             if self.root_node is None and parent is None:
                 self.root_node = current_node
 
-            children = nodes_dict.get("children")
-            if children:
+            if children := nodes_dict.get("children"):
                 for child in children:
                     self._load_ontology(child, current_node, depth + 1)
 
-    def add_node(
+    def _add_node(
         self, value: str, depth: int, parent: Optional[OntologyNode] = None
     ) -> OntologyNode:
         """Add a new node to the ontology"""
@@ -70,11 +77,16 @@ class Ontology(object):
         self.nodes[value] = new_node
         return new_node
 
-    def get_similarity(self, scheme1: str, scheme2: str) -> float:
+    def similarity(
+        self, scheme1: t.Optional[ag.Scheme], scheme2: t.Optional[ag.Scheme]
+    ) -> float:
         """Traverse the ontology tree and return the similarity of the common parent leaf"""
 
-        node1 = self.nodes.get(scheme1.lower(), self.root_node)
-        node2 = self.nodes.get(scheme2.lower(), self.root_node)
+        if not scheme1 or not scheme2:
+            return 1.0
+
+        node1 = self.nodes.get(scheme1.value.lower(), self.root_node)
+        node2 = self.nodes.get(scheme2.value.lower(), self.root_node)
 
         n_1 = node1.depth if node1 else 0
         n_2 = node2.depth if node2 else 0
@@ -85,12 +97,13 @@ class Ontology(object):
             else:
                 node2 = node2.parent
 
-        return self._wu_palmer(node1.depth, n_1, n_2) if node1 is not None else 0.0
+        return _wu_palmer(node1.depth, n_1, n_2) if node1 is not None else 0.0
 
-    def _wu_palmer(self, n_x: int, n_1: int, n_2: int):
-        """Calculate similarity automatically based on Wu/Palmer.
 
-        The function has an upper bound of 1.
-        """
+def _wu_palmer(n_x: int, n_1: int, n_2: int):
+    """Calculate similarity automatically based on Wu/Palmer.
 
-        return (2 * n_x) / (n_1 + n_2)
+    The function has an upper bound of 1.
+    """
+
+    return (2 * n_x) / (n_1 + n_2)

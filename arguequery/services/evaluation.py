@@ -7,10 +7,9 @@ import os
 from collections import OrderedDict
 from typing import Dict, List, Set, Tuple
 
-from ..libs.ndcg import ndcg
-from ..models.graph import Graph
-from ..models.result import Result
-from ..services import utils
+import arguebuf as ag
+from arguequery.libs.ndcg import ndcg
+from arguequery.models.result import Result
 
 logger = logging.getLogger("recap")
 from arguequery.config import config
@@ -36,14 +35,11 @@ class Evaluation(object):
     ndcg: float
 
     def __init__(
-        self, case_base: Dict[str, Graph], results: List[Result], query: Graph
+        self, case_base: Dict[str, ag.Graph], results: List[Result], query: ag.Graph
     ) -> None:
-        self._get_candidates(case_base, query.filename)
+        self._get_candidates(case_base, query.name)
 
-        self.system_rankings = OrderedDict()
-        for i, res in enumerate(results):
-            self.system_rankings[res.graph.filename] = i + 1
-
+        self.system_rankings = {res.graph.name: i + 1 for i, res in enumerate(results)}
         self.system_candidates = list(self.system_rankings.keys())
 
         self._calculate_metrics(case_base, results)
@@ -64,7 +60,7 @@ class Evaluation(object):
             },
         }
 
-    def _get_candidates(self, case_base: Dict[str, Graph], filename: str) -> None:
+    def _get_candidates(self, case_base: Dict[str, ag.Graph], filename: str) -> None:
         filepath = os.path.join(config["candidates_folder"], filename)
 
         try:
@@ -77,12 +73,10 @@ class Evaluation(object):
             self.user_rankings = {}
 
     def _calculate_metrics(
-        self, case_base: Dict[str, Graph], results: List[Result]
+        self, case_base: Dict[str, ag.Graph], results: List[Result]
     ) -> None:
         relevant_keys = set(self.user_candidates)
-        not_relevant_keys = {
-            key for key in case_base.keys() if key not in relevant_keys
-        }
+        not_relevant_keys = {key for key in case_base if key not in relevant_keys}
 
         tp = relevant_keys.intersection(set(self.system_candidates))
         fp = not_relevant_keys.intersection(set(self.system_candidates))
@@ -123,7 +117,7 @@ class Evaluation(object):
         self.average_precision = score / len(self.user_candidates)
 
     def _correctness_completeness(
-        self, case_base: Dict[str, Graph], results: List[Result]
+        self, case_base: Dict[str, ag.Graph], results: List[Result]
     ) -> None:
         orders = 0
         concordances = 0
