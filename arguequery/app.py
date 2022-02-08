@@ -30,7 +30,7 @@ def run() -> None:
     duration = 0
     eval_dict = {}
 
-    if config["perform_mac"] or config["perform_fac"]:
+    if config.cbr.mac or config.cbr.fac:
         graphs = {
             file.name: ag.Graph.from_file(file)
             for file in Path(config.casebase_folder).glob("*.json")
@@ -44,50 +44,47 @@ def run() -> None:
 
         evaluations: List[t.Optional[Evaluation]] = []
 
-        for number_of_run in range(1, config["number_of_runs"] + 1):
-            log.info(f"Run {number_of_run} of {config['number_of_runs']}")
+        for query_graph in query_graphs.values():
+            mac = [Result(graph, 0.0) for graph in graphs.values()]
+            fac = None
+            evaluation = None
 
-            for query_graph in query_graphs.values():
-                mac = [Result(graph, 0.0) for graph in graphs.values()]
-                fac = None
-                evaluation = None
+            if config.cbr.mac:
+                mac = [
+                    Result(graph, nlp.similarity(graph, query_graph))
+                    for graph in graphs.values()
+                ]
+                mac_results = exporter.get_results(mac)
 
-                if config["perform_mac"]:
-                    mac = [
-                        Result(graph, nlp.similarity(graph, query_graph))
-                        for graph in graphs.values()
-                    ]
-                    mac_results = exporter.get_results(mac)
+                if config.cbr.max_results > 0:
+                    mac = mac[: config.cbr.max_results]
 
-                    if config["retrieval_limit"] > 0:
-                        mac = mac[: config["retrieval_limit"]]
+                evaluation = Evaluation(graphs, mac, query_graph)
 
-                    evaluation = Evaluation(graphs, mac, query_graph)
+            if config.cbr.fac:
+                fac = retrieval.fac(mac, query_graph)
+                fac_results = exporter.get_results(fac)
 
-                if config["perform_fac"]:
-                    fac = retrieval.fac(mac, query_graph)
-                    fac_results = exporter.get_results(fac)
+                if config.cbr.max_results > 0:
+                    fac = fac[: config.cbr.max_results]
 
-                    if config["retrieval_limit"] > 0:
-                        fac = fac[: config["retrieval_limit"]]
+                evaluation = Evaluation(graphs, fac, query_graph)
 
-                    evaluation = Evaluation(graphs, fac, query_graph)
+            evaluations.append(evaluation)
 
-                evaluations.append(evaluation)
+            if config.export.individual_results:
+                exporter.export_results(
+                    query_graph.name,
+                    mac_results,
+                    fac_results,
+                    evaluation,
+                )
+                log.info("Individual Results were exported.")
 
-                if config["export_results"]:
-                    exporter.export_results(
-                        query_graph.name,
-                        mac_results,
-                        fac_results,
-                        evaluation,
-                    )
-                    log.info("Individual Results were exported.")
-
-        duration = (timer() - start_time) / config["number_of_runs"]
+        duration = timer() - start_time
         eval_dict = exporter.get_results_aggregated(evaluations)
 
-        if config["export_results_aggregated"]:
+        if config.export.aggregated_results:
             exporter.export_results_aggregated(eval_dict, duration, **config)
             log.info("Aggregated Results were exported.")
 

@@ -27,7 +27,7 @@ def fac(mac_results: List[Result], query_graph: ag.Graph) -> List[Result]:
 
     logger.info(f"A* Search for query '{query_graph.name}'.")
 
-    if config["debug"]:
+    if config.debug:
         results = [a_star_search(*param) for param in params]
     else:
         with multiprocessing.Pool() as pool:
@@ -100,8 +100,8 @@ def _expand(
             s.remove(query_obj)
 
     return (
-        q[len(q) - config["a_star_queue_limit"] :]
-        if config["a_star_queue_limit"] > 0
+        q[len(q) - config.cbr.queue_limit :]
+        if config.cbr.queue_limit > 0
         else q
     )
 

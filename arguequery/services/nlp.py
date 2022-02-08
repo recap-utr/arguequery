@@ -14,31 +14,27 @@ from arguequery.models.ontology import Ontology
 _vector_cache = {}
 
 _model_params = {
-    "glove": nlp_pb2.NlpConfig(
-        language=config["nlp"]["lang"],
+    "spacy": nlp_pb2.NlpConfig(
+        language=config.nlp.lang,
         spacy_model="en_core_web_lg",
     ),
+    "spacy_trf": nlp_pb2.NlpConfig(
+        language=config.nlp.lang,
+        spacy_model="en_core_web_trf",
+    ),
     "use": nlp_pb2.NlpConfig(
-        language=config["nlp"]["lang"],
+        language=config.nlp.lang,
         embedding_models=[
             nlp_pb2.EmbeddingModel(
                 model_type=nlp_pb2.EMBEDDING_TYPE_USE,
+                # model_name="https://tfhub.dev/google/universal-sentence-encoder-large/5",
                 model_name="https://tfhub.dev/google/universal-sentence-encoder/4",
                 pooling=nlp_pb2.POOLING_MEAN,
             )
         ],
     ),
-    # "use-large": {
-    #     "embedding_models": [
-    #         nlp_pb2.EmbeddingModel(
-    #             model_type=nlp_pb2.EMBEDDING_TYPE_USE,
-    #             model_name="https://tfhub.dev/google/universal-sentence-encoder-large/5",
-    #             pooling=nlp_pb2.POOLING_MEAN,
-    #         )
-    #     ],
-    # },
     "sbert": nlp_pb2.NlpConfig(
-        language=config["nlp"]["lang"],
+        language=config.nlp.lang,
         embedding_models=[
             nlp_pb2.EmbeddingModel(
                 model_type=nlp_pb2.EMBEDDING_TYPE_SBERT,
@@ -51,7 +47,7 @@ _model_params = {
 
 
 _channel = grpc.insecure_channel(
-    config["resources"]["nlp"]["url"], [("grpc.lb_policy_name", "round_robin")]
+    config.nlp.url, [("grpc.lb_policy_name", "round_robin")]
 )
 _client = nlp_pb2_grpc.NlpServiceStub(_channel)
 
@@ -68,7 +64,7 @@ def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
             nlp_pb2.VectorsRequest(
                 texts=new_texts,
                 embedding_levels=levels,
-                config=_model_params[config.nlp.embeddings],
+                config=_model_params[config.nlp.embedding],
             )
         )
 

@@ -44,12 +44,12 @@ def export_results(
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
     filename = os.path.join(
-        config["results_folder"], "{}-{}".format(timestamp, query_file_name)
+        config.path.results, "{}-{}".format(timestamp, query_file_name)
     )
     fieldnames = ["name", "rank", "similarity", "text"]
 
-    if not os.path.exists(config["results_folder"]):
-        os.makedirs(config["results_folder"])
+    if not os.path.exists(config.path.results):
+        os.makedirs(config.path.results)
 
     if mac_results:
         with open("{}-mac.csv".format(filename), "w", newline="") as csvfile:
@@ -113,10 +113,10 @@ def export_results_aggregated(
     """Write the results to file"""
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    filename = os.path.join(config["results_folder"], timestamp)
+    filename = os.path.join(config.path.results, timestamp)
 
-    if not os.path.exists(config["results_folder"]):
-        os.makedirs(config["results_folder"])
+    if not os.path.exists(config.path.results):
+        os.makedirs(config.path.results)
 
     with open(f"{filename}.json", "w") as outfile:
         tex_values = []

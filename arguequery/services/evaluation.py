@@ -61,7 +61,7 @@ class Evaluation(object):
         }
 
     def _get_candidates(self, case_base: Dict[str, ag.Graph], filename: str) -> None:
-        filepath = os.path.join(config["candidates_folder"], filename)
+        filepath = os.path.join(config.path.rankings, filename)
 
         try:
             with open(filepath) as file:
@@ -150,7 +150,7 @@ class Evaluation(object):
 
     def _ndcg(self) -> None:
         ranking_inv = {
-            name: config["candidates_max_rank"] + 1 - rank
+            name: config.evaluation.max_user_rank + 1 - rank
             for name, rank in self.user_rankings.items()
         }
         results_ratings = [
