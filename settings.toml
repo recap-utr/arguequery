@@ -2,9 +2,9 @@
 debug = false
 
 [path]
-cases = "data/case-base/english/microtexts-annotated"
+cases = "data/cases/english/microtexts-annotated"
 queries = "data/queries/english/microtexts-annotated"
-rankings = "data/candidates/microtexts"
+rankings = "data/rankings/microtexts"
 results = "data/results"
 ontology = "ontology.yml"
 
