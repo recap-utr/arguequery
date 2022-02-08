@@ -3,10 +3,10 @@ from __future__ import absolute_import, annotations
 import csv
 import json
 import logging
-import os
 import time
 import typing as t
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -43,29 +43,28 @@ def export_results(
     """
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    filename = os.path.join(
-        config.path.results, "{}-{}".format(timestamp, query_file_name)
-    )
+
+    results_path = Path(config.path.results)
+    results_path.mkdir(parents=True, exist_ok=True)
+
+    folder = results_path / timestamp / query_file_name
     fieldnames = ["name", "rank", "similarity", "text"]
 
-    if not os.path.exists(config.path.results):
-        os.makedirs(config.path.results)
-
     if mac_results:
-        with open("{}-mac.csv".format(filename), "w", newline="") as csvfile:
+        with (folder / "mac.csv").open("w", newline="") as csvfile:
             csvwriter = csv.DictWriter(csvfile, fieldnames)
             csvwriter.writeheader()
             csvwriter.writerows(mac_results)
 
     if fac_results:
-        with open("{}-fac.csv".format(filename), "w", newline="") as csvfile:
+        with (folder / "fac.csv").open("w", newline="") as csvfile:
             csvwriter = csv.DictWriter(csvfile, fieldnames)
             csvwriter.writeheader()
             csvwriter.writerows(fac_results)
 
     if evaluation:
         eval_dict = evaluation.as_dict()
-        with open("{}-eval.csv".format(filename), "w", newline="") as csvfile:
+        with (folder / "eval.csv").open("w", newline="") as csvfile:
             csvwriter = csv.DictWriter(csvfile, ["metric", "value"])
             csvwriter.writeheader()
 
@@ -113,12 +112,13 @@ def export_results_aggregated(
     """Write the results to file"""
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-    filename = os.path.join(config.path.results, timestamp)
 
-    if not os.path.exists(config.path.results):
-        os.makedirs(config.path.results)
+    results_path = Path(config.path.results)
+    results_path.mkdir(parents=True, exist_ok=True)
 
-    with open(f"{filename}.json", "w") as outfile:
+    file = (results_path / timestamp).with_suffix(".json")
+
+    with file.open("w") as f:
         tex_values = []
 
         for eval_type in evaluation.values():
@@ -130,4 +130,4 @@ def export_results_aggregated(
             "Duration": round(duration, 3),
             "Parameters": kwargs,
         }
-        json.dump(json_out, outfile, indent=4, ensure_ascii=False)
+        json.dump(json_out, f, indent=4, ensure_ascii=False)

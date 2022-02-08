@@ -1,31 +1,18 @@
 # If true, only one thread will be used (which decreases performance)
 debug = false
+nlp_url = "127.0.0.1:5678"
 
 [path]
 cases = "data/cases/english/microtexts-annotated"
 queries = "data/queries/english/microtexts-annotated"
-rankings = "data/rankings/microtexts"
+benchmark = "data/benchmark/microtexts"
 results = "data/results"
 ontology = "ontology.yml"
 
-[nlp]
-url = "127.0.0.1:5678"
-lang = "en"
-embedding = "spacy"
-similarity = "cosine"
-token_vectors = false
-schemes = true
-ontology = false
-
 [cbr]
-mac = true
-fac = true
 queue_limit = 10000
-max_results = 10
+max_user_rank = 3
 
 [export]
 individual_results = false
 aggregated_results = true
-
-[evaluation]
-max_user_rank = 3

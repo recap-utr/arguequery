@@ -28,6 +28,7 @@ def run() -> None:
     fac_results = None
     start_time = 0
     duration = 0
+
     eval_dict = {}
 
     if config.cbr.mac or config.cbr.fac:

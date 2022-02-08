@@ -3,8 +3,8 @@ from __future__ import absolute_import, annotations
 import json
 import logging
 import math
-import os
 from collections import OrderedDict
+from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import arguebuf as ag
@@ -37,10 +37,17 @@ class Evaluation(object):
     def __init__(
         self, case_base: Dict[str, ag.Graph], results: List[Result], query: ag.Graph
     ) -> None:
-        self._get_candidates(case_base, query.name)
+        benchmark_file = Path(config.path.benchmark, query.name).with_suffix(".json")
 
-        self.system_rankings = {res.graph.name: i + 1 for i, res in enumerate(results)}
-        self.system_candidates = list(self.system_rankings.keys())
+        with benchmark_file.open("r") as f:
+            data = json.load(f)
+            self.user_candidates = data["candidates"]
+            self.user_rankings = data["rankings"]
+
+        self.system_rankings = {
+            f"{res.graph.name}.json": i + 1 for i, res in enumerate(results)
+        }
+        self.system_candidates = [f"{res.graph.name}.json" for res in results]
 
         self._calculate_metrics(case_base, results)
 
@@ -59,18 +66,6 @@ class Evaluation(object):
                 "Completeness": self.completeness,
             },
         }
-
-    def _get_candidates(self, case_base: Dict[str, ag.Graph], filename: str) -> None:
-        filepath = os.path.join(config.path.rankings, filename)
-
-        try:
-            with open(filepath) as file:
-                data = json.load(file)
-                self.user_candidates = data["candidates"]
-                self.user_rankings = data["rankings"]
-        except Exception:
-            self.user_candidates = []
-            self.user_rankings = {}
 
     def _calculate_metrics(
         self, case_base: Dict[str, ag.Graph], results: List[Result]
@@ -150,7 +145,7 @@ class Evaluation(object):
 
     def _ndcg(self) -> None:
         ranking_inv = {
-            name: config.evaluation.max_user_rank + 1 - rank
+            name: config.cbr.max_user_rank + 1 - rank
             for name, rank in self.user_rankings.items()
         }
         results_ratings = [

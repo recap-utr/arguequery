@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import typing as t
+from inspect import isgenerator
 
 import arguebuf as ag
 import grpc
@@ -12,51 +13,64 @@ from arguequery.config import config
 from arguequery.models.ontology import Ontology
 
 _vector_cache = {}
+_nlp_config = nlp_pb2.NlpConfig()
+_use_scheme_ontology = False
+_enforce_scheme_types = False
 
-_model_params = {
-    "spacy": nlp_pb2.NlpConfig(
-        language=config.nlp.lang,
-        spacy_model="en_core_web_lg",
-    ),
-    "spacy_trf": nlp_pb2.NlpConfig(
-        language=config.nlp.lang,
-        spacy_model="en_core_web_trf",
-    ),
-    "use": nlp_pb2.NlpConfig(
-        language=config.nlp.lang,
-        embedding_models=[
-            nlp_pb2.EmbeddingModel(
-                model_type=nlp_pb2.EMBEDDING_TYPE_USE,
-                # model_name="https://tfhub.dev/google/universal-sentence-encoder-large/5",
-                model_name="https://tfhub.dev/google/universal-sentence-encoder/4",
-                pooling=nlp_pb2.POOLING_MEAN,
-            )
-        ],
-    ),
-    "sbert": nlp_pb2.NlpConfig(
-        language=config.nlp.lang,
-        embedding_models=[
-            nlp_pb2.EmbeddingModel(
-                model_type=nlp_pb2.EMBEDDING_TYPE_SBERT,
-                model_name="stsb-mpnet-base-v2",
-                pooling=nlp_pb2.POOLING_MEAN,
-            )
-        ],
-    ),
-}
+# _model_params = {
+#     "spacy": nlp_pb2.NlpConfig(
+#         language="en",
+#         spacy_model="en_core_web_lg",
+#     ),
+#     "spacy_trf": nlp_pb2.NlpConfig(
+#         language="en",
+#         spacy_model="en_core_web_trf",
+#     ),
+#     "use": nlp_pb2.NlpConfig(
+#         language="en",
+#         embedding_models=[
+#             nlp_pb2.EmbeddingModel(
+#                 model_type=nlp_pb2.EMBEDDING_TYPE_USE,
+#                 # model_name="https://tfhub.dev/google/universal-sentence-encoder-large/5",
+#                 model_name="https://tfhub.dev/google/universal-sentence-encoder/4",
+#                 pooling=nlp_pb2.POOLING_MEAN,
+#             )
+#         ],
+#     ),
+#     "sbert": nlp_pb2.NlpConfig(
+#         language="en",
+#         embedding_models=[
+#             nlp_pb2.EmbeddingModel(
+#                 model_type=nlp_pb2.EMBEDDING_TYPE_SBERT,
+#                 model_name="stsb-mpnet-base-v2",
+#                 pooling=nlp_pb2.POOLING_MEAN,
+#             )
+#         ],
+#     ),
+# }
 
 
 _channel = grpc.insecure_channel(
-    config.nlp.url, [("grpc.lb_policy_name", "round_robin")]
+    config.nlp_url, [("grpc.lb_policy_name", "round_robin")]
 )
 _client = nlp_pb2_grpc.NlpServiceStub(_channel)
 
+_use_token_vectors = lambda: _nlp_config.similarity_method in (
+    nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DYNAMAX_DICE,
+    nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DYNAMAX_JACCARD,
+    nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_MAXPOOL_JACCARD,
+    nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DYNAMAX_OTSUKA,
+)
+
 
 def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
+    if isgenerator(texts):
+        texts = list(texts)
+
     if new_texts := [text for text in texts if text not in _vector_cache]:
         levels = (
             [nlp_pb2.EMBEDDING_LEVEL_TOKENS]
-            if config.nlp.token_vectors
+            if _use_token_vectors()
             else [nlp_pb2.EMBEDDING_LEVEL_DOCUMENT]
         )
 
@@ -64,7 +78,7 @@ def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
             nlp_pb2.VectorsRequest(
                 texts=new_texts,
                 embedding_levels=levels,
-                config=_model_params[config.nlp.embedding],
+                config=_nlp_config,
             )
         )
 
@@ -72,7 +86,7 @@ def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
             tuple(
                 tuple(np.array(token.vector) for token in x.tokens) for x in res.vectors
             )
-            if config.nlp.token_vectors
+            if _use_token_vectors()
             else tuple(np.array(x.document.vector) for x in res.vectors)
         )
 
@@ -87,14 +101,17 @@ def _vector(text: str) -> np.ndarray:
 
 def _similarities(text_tuples: t.Iterable[t.Tuple[str, str]]) -> t.Tuple[float, ...]:
     # We first transform all text tuples into a long list to make the server processing faster
-    vecs = _vectors(itertools.chain.from_iterable(text_tuples))
+    texts_chain = list(itertools.chain.from_iterable(text_tuples))
+    vecs = _vectors(texts_chain)
+
+    assert len(vecs) == len(texts_chain)
 
     # Then, we construct an iterator over all received vectors
     vecs_iter = iter(vecs)
 
     # By using the same iterator twice in the zip function, we always iterate over two entries per loop
     return tuple(
-        getattr(nlp_service.similarity, config.nlp.similarity)(vec1, vec2)
+        nlp_service.similarity.proto_mapping[_nlp_config.similarity_method](vec1, vec2)
         for vec1, vec2 in zip(vecs_iter, vecs_iter)
     )
 
@@ -103,7 +120,7 @@ def _similarity(text1: str, text2: str) -> float:
     return _similarities([(text1, text2)])[0]
 
 
-GraphElement = t.Union[ag.Node, ag.Edge, ag.Graph]
+GraphElement = t.Union[ag.Node, ag.Edge, ag.Graph, str]
 
 
 def _graph2text(g: ag.Graph) -> str:
@@ -120,11 +137,11 @@ def similarities(
             result.append(_similarity(obj1.plain_text, obj2.plain_text))
 
         elif isinstance(obj1, ag.SchemeNode) and isinstance(obj2, ag.SchemeNode):
-            if obj1.type and obj2.type and config.nlp.schemes:
+            if obj1.type and obj2.type and _enforce_scheme_types:
                 if (
                     obj1.type == ag.SchemeType.SUPPORT
                     and obj2.type == ag.SchemeType.SUPPORT
-                    and config.nlp.ontology
+                    and _use_scheme_ontology
                 ):
                     ontology = Ontology.instance()
                     result.append(
@@ -143,13 +160,22 @@ def similarities(
                 result.append(1.0)
 
         elif isinstance(obj1, ag.Edge) and isinstance(obj2, ag.Edge):
-            if (source_sim := similarity(obj1.source, obj2.source)) and (
-                target_sim := similarity(obj1.target, obj2.target)
-            ):
-                result.append(0.5 * (source_sim + target_sim))
+            result.append(
+                0.5
+                * (
+                    similarity(obj1.source, obj2.source)
+                    + similarity(obj1.target, obj2.target)
+                )
+            )
 
-        elif isinstance(obj1, ag.Graph) and isinstance(obj2, ag.Graph):
-            result.append(_similarity(_graph2text(obj1), _graph2text(obj2)))
+        elif isinstance(obj1, (ag.Graph, str)) and isinstance(obj2, (ag.Graph, str)):
+            if isinstance(obj1, ag.Graph):
+                obj1 = _graph2text(obj1)
+
+            if isinstance(obj2, ag.Graph):
+                obj2 = _graph2text(obj2)
+
+            result.append(_similarity(obj1, obj1))
 
         else:
             result.append(0.0)

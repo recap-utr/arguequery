@@ -16,16 +16,23 @@ logger = logging.getLogger("recap")
 from arguequery.config import config
 
 
-def fac(mac_results: List[Result], query_graph: ag.Graph) -> List[Result]:
+def mac(
+    cases: t.Mapping[str, ag.Graph], query: t.Union[str, ag.Graph]
+) -> t.Dict[str, float]:
+    similarities = nlp.similarities((case, query) for case in cases.values())
+    return dict(zip(cases.keys(), similarities))
+
+
+def fac(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
     """Perform an in-depth analysis of the prefilter results"""
 
-    results: List[Result] = []
+    results: List[t.Tuple[str, float]] = []
     params = [
-        (mac_result.graph, query_graph, i, len(mac_results))
-        for i, mac_result in enumerate(mac_results)
+        (case_graph, case_id, query, i, len(cases))
+        for (i, (case_id, case_graph)) in enumerate(cases.items())
     ]
 
-    logger.info(f"A* Search for query '{query_graph.name}'.")
+    logger.info(f"A* Search for query '{query.name}'.")
 
     if config.debug:
         results = [a_star_search(*param) for param in params]
@@ -33,64 +40,61 @@ def fac(mac_results: List[Result], query_graph: ag.Graph) -> List[Result]:
         with multiprocessing.Pool() as pool:
             results = pool.starmap(a_star_search, params)
 
-    results.sort(key=lambda result: result.similarity, reverse=True)
-
-    return results
+    return dict(results)
 
 
 # According to Bergmann and Gil, 2014
 def a_star_search(
-    case_graph: ag.Graph,
-    query_graph: ag.Graph,
+    case: ag.Graph,
+    case_id: str,
+    query: ag.Graph,
     current_iteration: int,
     total_iterations: int,
-) -> Result:
+) -> t.Tuple[str, float]:
     """Perform an A* analysis of the case base and the query"""
 
     q: List[SearchNode] = []
     s0 = SearchNode(
-        len(query_graph.nodes),
-        len(query_graph.edges),
-        query_graph.nodes.values(),
-        query_graph.edges.values(),
+        len(query.nodes),
+        len(query.edges),
+        query.nodes.values(),
+        query.edges.values(),
     )
 
     bisect.insort(q, s0)
 
     while q[-1].nodes or q[-1].edges:
-        q = _expand(q, case_graph, query_graph)
+        q = _expand(q, case, query)
 
     candidate = q[-1]
 
     logger.debug(
-        f"A* search for {case_graph.name} finished. ({current_iteration}/{total_iterations})"
+        f"A* search for {case.name} finished. ({current_iteration}/{total_iterations})"
     )
 
-    return Result(case_graph, candidate.mapping.similarity)
+    return (case_id, candidate.mapping.similarity)
 
 
-def _expand(
-    q: List[SearchNode], case_graph: ag.Graph, query_graph: ag.Graph
-) -> List[SearchNode]:
+def _expand(q: List[SearchNode], case: ag.Graph, query: ag.Graph) -> List[SearchNode]:
     """Expand a given node and its queue"""
 
     s = q[-1]
     mapped = False
-    query_obj, iterator = select1(s, query_graph, case_graph)
+    query_obj, iterator = select1(s, query, case)
 
     if query_obj and iterator:
         for case_obj in iterator:
             if s.mapping.is_legal_mapping(query_obj, case_obj):
                 s_new = SearchNode(
-                    len(query_graph.nodes),
-                    len(query_graph.edges),
+                    len(query.nodes),
+                    len(query.edges),
                     s.nodes,
                     s.edges,
                     s.mapping,
                 )
                 s_new.mapping.map(query_obj, case_obj)
                 s_new.remove(query_obj)
-                s_new.f = g(s_new, query_graph) + h2(s_new, query_graph, case_graph)
+                s_new.f = g(s_new, query) + h2(s_new, query, case)
                 bisect.insort(q, s_new)
                 mapped = True
 
@@ -99,15 +103,11 @@ def _expand(
         else:
             s.remove(query_obj)
 
-    return (
-        q[len(q) - config.cbr.queue_limit :]
-        if config.cbr.queue_limit > 0
-        else q
-    )
+    return q[len(q) - config.cbr.queue_limit :] if config.cbr.queue_limit > 0 else q
 
 
 def select1(
-    s: SearchNode, query_graph: ag.Graph, case_graph: ag.Graph
+    s: SearchNode, query: ag.Graph, case: ag.Graph
 ) -> t.Tuple[
     t.Optional[t.Union[ag.Node, ag.Edge, None]],
     t.Optional[t.Iterable[t.Union[ag.Node, ag.Edge]]],
@@ -118,53 +118,51 @@ def select1(
     if s.nodes:
         query_obj = random.choice(tuple(s.nodes))
         candidates = (
-            case_graph.atom_nodes.values()
+            case.atom_nodes.values()
             if isinstance(query_obj, ag.AtomNode)
-            else case_graph.scheme_nodes.values()
+            else case.scheme_nodes.values()
         )
     elif s.edges:
         query_obj = random.choice(tuple(s.edges))
-        candidates = case_graph.edges.values()
+        candidates = case.edges.values()
 
     return query_obj, candidates
 
 
-# def select2(s: SearchNode, query_graph: ag.Graph, case_graph: ag.Graph) -> Tuple:
+# def select2(s: SearchNode, query: ag.Graph, case: ag.Graph) -> Tuple:
 #     pass
 
 
-def h1(s: SearchNode, query_graph: ag.Graph, case_graph: ag.Graph) -> float:
+def h1(s: SearchNode, query: ag.Graph, case: ag.Graph) -> float:
     """Heuristic to compute future costs"""
 
-    return (len(s.nodes) + len(s.edges)) / (
-        len(query_graph.nodes) + len(query_graph.edges)
-    )
+    return (len(s.nodes) + len(s.edges)) / (len(query.nodes) + len(query.edges))
 
 
-def h2(s: SearchNode, query_graph: ag.Graph, case_graph: ag.Graph) -> float:
+def h2(s: SearchNode, query: ag.Graph, case: ag.Graph) -> float:
     h_val = 0
 
     for x in s.nodes:
         max_sim = max(
             nlp.similarity(x, y)
             for y in (
-                case_graph.atom_nodes.values()
+                case.atom_nodes.values()
                 if isinstance(x, ag.AtomNode)
-                else case_graph.scheme_nodes.values()
+                else case.scheme_nodes.values()
             )
         )
 
         h_val += max_sim
 
     for x in s.edges:
-        max_sim = max(nlp.similarity(x, y) for y in case_graph.edges.values())
+        max_sim = max(nlp.similarity(x, y) for y in case.edges.values())
 
         h_val += max_sim
 
-    return h_val / (len(query_graph.nodes) + len(query_graph.edges))
+    return h_val / (len(query.nodes) + len(query.edges))
 
 
-def g(s: SearchNode, query_graph: ag.Graph) -> float:
+def g(s: SearchNode, query: ag.Graph) -> float:
     """Function to compute the costs of all previous steps"""
 
     return s.mapping.similarity
