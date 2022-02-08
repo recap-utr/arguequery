@@ -33,11 +33,11 @@ def run() -> None:
     if config.cbr.mac or config.cbr.fac:
         graphs = {
             file.name: ag.Graph.from_file(file)
-            for file in Path(config.casebase_folder).glob("*.json")
+            for file in Path(config.path.cases).glob("*.json")
         }
         query_graphs = {
             file.name: ag.Graph.from_file(file)
-            for file in Path(config.queries_folder).glob("*.json")
+            for file in Path(config.path.queries).glob("*.json")
         }
 
         start_time = timer()
