@@ -36,7 +36,11 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
 
             if req.fac_phase and req.WhichOneof("query") == "query_graph":
                 query = ag.Graph.from_protobuf(req.query_graph)
-                fac_cases = {key: cases[key] for key, _ in filtered_mac_results}
+                fac_cases = (
+                    {key: cases[key] for key, _ in filtered_mac_results}
+                    if filtered_mac_results
+                    else cases
+                )
                 fac_results = retrieval.fac(fac_cases, query)
 
             filtered_fac_results = _filter(_sort(fac_results), req.limit)

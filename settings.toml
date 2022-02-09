@@ -5,8 +5,8 @@ retrieval_url = "127.0.0.1:6789"
 
 [path]
 glob_pattern = "*.json"
-cases = "data/cases/english/microtexts-annotated"
-queries = "data/queries/english/microtexts-annotated"
+cases = "data/cases/english/microtexts-plain"
+queries = "data/queries/english/microtexts-plain"
 benchmark = "data/benchmark/microtexts"
 results = "data/results"
 ontology = "ontology.yml"
@@ -14,7 +14,7 @@ ontology = "ontology.yml"
 [nlp]
 language = "en"
 enforce_scheme_types = false
-use_scheme_ontology = false
+use_scheme_ontology = false  # only relevant if 'enforce_scheme_types = true'
 
 [cbr]
 limit = 10

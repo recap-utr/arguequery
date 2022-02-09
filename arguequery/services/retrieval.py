@@ -36,9 +36,9 @@ def fac(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
     results: List[t.Tuple[str, float]] = []
     params = [
         (
-            case_graph.to_protobuf(),
+            case_graph,
             case_id,
-            query.to_protobuf(),
+            query,
             i,
             len(cases),
             config.cbr.queue_limit,
@@ -63,17 +63,14 @@ def fac(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
 
 # According to Bergmann and Gil, 2014
 def a_star_search(
-    case_pb: graph_pb2.Graph,
+    case: ag.Graph,
     case_id: str,
-    query_pb: graph_pb2.Graph,
+    query: ag.Graph,
     current_iteration: int,
     total_iterations: int,
     queue_limit: int,
 ) -> t.Tuple[str, float]:
     """Perform an A* analysis of the case base and the query"""
-    case = ag.Graph.from_protobuf(case_pb)
-    query = ag.Graph.from_protobuf(query_pb)
-
     q: List[SearchNode] = []
     s0 = SearchNode(
         len(query.nodes),

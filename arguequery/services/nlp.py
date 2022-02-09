@@ -183,7 +183,7 @@ def similarities(
             if isinstance(obj2, ag.Graph):
                 obj2 = _graph2text(obj2)
 
-            result.append(_similarity(obj1, obj1))
+            result.append(_similarity(obj1, obj2))
 
         else:
             result.append(0.0)
