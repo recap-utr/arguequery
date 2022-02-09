@@ -12,10 +12,14 @@ from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from arguequery.config import config
 from arguequery.models.ontology import Ontology
 
-_vector_cache = {}
-_nlp_config = nlp_pb2.NlpConfig()
-_use_scheme_ontology = False
-_enforce_scheme_types = False
+vector_cache = {}
+nlp_config = nlp_pb2.NlpConfig(
+    language=config.nlp.language,
+    spacy_model="en_core_web_lg",
+    similarity_method=nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_COSINE,
+)
+use_scheme_ontology = False
+enforce_scheme_types = False
 
 # _model_params = {
 #     "spacy": nlp_pb2.NlpConfig(
@@ -50,12 +54,16 @@ _enforce_scheme_types = False
 # }
 
 
-_channel = grpc.insecure_channel(
-    config.nlp_url, [("grpc.lb_policy_name", "round_robin")]
-)
-_client = nlp_pb2_grpc.NlpServiceStub(_channel)
+def init_client():
+    channel = grpc.insecure_channel(
+        config.nlp_url, [("grpc.lb_policy_name", "round_robin")]
+    )
+    return nlp_pb2_grpc.NlpServiceStub(channel)
 
-_use_token_vectors = lambda: _nlp_config.similarity_method in (
+
+client = init_client()
+
+_use_token_vectors = lambda: nlp_config.similarity_method in (
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DYNAMAX_DICE,
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DYNAMAX_JACCARD,
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_MAXPOOL_JACCARD,
@@ -67,18 +75,18 @@ def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
     if isgenerator(texts):
         texts = list(texts)
 
-    if new_texts := [text for text in texts if text not in _vector_cache]:
+    if new_texts := [text for text in texts if text not in vector_cache]:
         levels = (
             [nlp_pb2.EMBEDDING_LEVEL_TOKENS]
             if _use_token_vectors()
             else [nlp_pb2.EMBEDDING_LEVEL_DOCUMENT]
         )
 
-        res = _client.Vectors(
+        res = client.Vectors(
             nlp_pb2.VectorsRequest(
                 texts=new_texts,
                 embedding_levels=levels,
-                config=_nlp_config,
+                config=nlp_config,
             )
         )
 
@@ -90,9 +98,9 @@ def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
             else tuple(np.array(x.document.vector) for x in res.vectors)
         )
 
-        _vector_cache.update(dict(zip(new_texts, new_vectors)))
+        vector_cache.update(dict(zip(new_texts, new_vectors)))
 
-    return tuple(_vector_cache[text] for text in texts)
+    return tuple(vector_cache[text] for text in texts)
 
 
 def _vector(text: str) -> np.ndarray:
@@ -111,7 +119,7 @@ def _similarities(text_tuples: t.Iterable[t.Tuple[str, str]]) -> t.Tuple[float, 
 
     # By using the same iterator twice in the zip function, we always iterate over two entries per loop
     return tuple(
-        nlp_service.similarity.proto_mapping[_nlp_config.similarity_method](vec1, vec2)
+        nlp_service.similarity.proto_mapping[nlp_config.similarity_method](vec1, vec2)
         for vec1, vec2 in zip(vecs_iter, vecs_iter)
     )
 
@@ -137,11 +145,11 @@ def similarities(
             result.append(_similarity(obj1.plain_text, obj2.plain_text))
 
         elif isinstance(obj1, ag.SchemeNode) and isinstance(obj2, ag.SchemeNode):
-            if obj1.type and obj2.type and _enforce_scheme_types:
+            if obj1.type and obj2.type and enforce_scheme_types:
                 if (
                     obj1.type == ag.SchemeType.SUPPORT
                     and obj2.type == ag.SchemeType.SUPPORT
-                    and _use_scheme_ontology
+                    and use_scheme_ontology
                 ):
                     ontology = Ontology.instance()
                     result.append(

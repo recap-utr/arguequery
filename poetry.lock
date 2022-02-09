@@ -1,6 +1,6 @@
 [[package]]
 name = "arg-services"
-version = "0.1.23"
+version = "0.1.25"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
@@ -650,8 +650,8 @@ content-hash = "c05273fe91a817110a152059352ce2a2a8bd878e41cf2b00c8760dc6b905bca9
 
 [metadata.files]
 arg-services = [
-    {file = "arg-services-0.1.23.tar.gz", hash = "sha256:2646864a2175c6bdacc5e6e3c8fd854cb20e01d06ddc5567d45513c406c49d0c"},
-    {file = "arg_services-0.1.23-py3-none-any.whl", hash = "sha256:4ed5c134aad3439f3fd9780414c6e2e8c4292ecdde6fcd25e97f24cd57dceb7e"},
+    {file = "arg-services-0.1.25.tar.gz", hash = "sha256:2b6dc76eb212a1bb118bbf0158b34b4aecfd95e7e9d9b9eea72804b174938318"},
+    {file = "arg_services-0.1.25-py3-none-any.whl", hash = "sha256:acc20017aea86bd738a5c2fead1eec8e66857bd5f71c4a72848febb018d213ae"},
 ]
 arguebuf = [
     {file = "Arguebuf-0.2.12-py3-none-any.whl", hash = "sha256:aa48b0bd5be9bc28448a5feeed6663bdd234ddddb743b0b93f37d90b3a3cfbd9"},

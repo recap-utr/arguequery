@@ -1,15 +1,25 @@
 # If true, only one thread will be used (which decreases performance)
-debug = false
+debug = true
 nlp_url = "127.0.0.1:5678"
+retrieval_url = "127.0.0.1:6789"
 
 [path]
+glob_pattern = "*.json"
 cases = "data/cases/english/microtexts-annotated"
 queries = "data/queries/english/microtexts-annotated"
 benchmark = "data/benchmark/microtexts"
 results = "data/results"
 ontology = "ontology.yml"
 
+[nlp]
+language = "en"
+enforce_scheme_types = false
+use_scheme_ontology = false
+
 [cbr]
+limit = 10
+mac = true
+fac = true
 queue_limit = 10000
 max_user_rank = 3
 

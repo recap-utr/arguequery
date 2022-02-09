@@ -3,11 +3,13 @@ from __future__ import absolute_import, annotations
 import json
 import logging
 import math
+import typing as t
 from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import arguebuf as ag
+from arg_services.retrieval.v1 import retrieval_pb2
 from arguequery.libs.ndcg import ndcg
 from arguequery.models.result import Result
 
@@ -15,7 +17,7 @@ logger = logging.getLogger("recap")
 from arguequery.config import config
 
 
-class Evaluation(object):
+class Evaluation:
     """Class for calculating and storing evaluation measures
 
     Candiates are fetched automatically from a file.
@@ -35,7 +37,10 @@ class Evaluation(object):
     ndcg: float
 
     def __init__(
-        self, case_base: Dict[str, ag.Graph], results: List[Result], query: ag.Graph
+        self,
+        cases: t.Mapping[str, ag.Graph],
+        results: t.Sequence[retrieval_pb2.RetrievedCase],
+        query: ag.Graph,
     ) -> None:
         benchmark_file = Path(config.path.benchmark, query.name).with_suffix(".json")
 
@@ -44,12 +49,12 @@ class Evaluation(object):
             self.user_candidates = data["candidates"]
             self.user_rankings = data["rankings"]
 
-        self.system_rankings = {
-            f"{res.graph.name}.json": i + 1 for i, res in enumerate(results)
-        }
-        self.system_candidates = [f"{res.graph.name}.json" for res in results]
+        ranking = [x.id for x in results]
 
-        self._calculate_metrics(case_base, results)
+        self.system_rankings = {key: i + 1 for i, key in enumerate(ranking)}
+        self.system_candidates = list(ranking)
+
+        self._calculate_metrics(cases)
 
     def as_dict(self):
         return {
@@ -67,11 +72,9 @@ class Evaluation(object):
             },
         }
 
-    def _calculate_metrics(
-        self, case_base: Dict[str, ag.Graph], results: List[Result]
-    ) -> None:
+    def _calculate_metrics(self, cases: t.Mapping[str, ag.Graph]) -> None:
         relevant_keys = set(self.user_candidates)
-        not_relevant_keys = {key for key in case_base if key not in relevant_keys}
+        not_relevant_keys = {key for key in cases if key not in relevant_keys}
 
         tp = relevant_keys.intersection(set(self.system_candidates))
         fp = not_relevant_keys.intersection(set(self.system_candidates))
@@ -81,7 +84,7 @@ class Evaluation(object):
         self.recall = len(tp) / (len(tp) + len(fn))
 
         self._average_precision()
-        self._correctness_completeness(case_base, results)
+        self._correctness_completeness()
         self._ndcg()
 
     def f_score(self, beta: int):
@@ -111,9 +114,7 @@ class Evaluation(object):
 
         self.average_precision = score / len(self.user_candidates)
 
-    def _correctness_completeness(
-        self, case_base: Dict[str, ag.Graph], results: List[Result]
-    ) -> None:
+    def _correctness_completeness(self) -> None:
         orders = 0
         concordances = 0
         disconcordances = 0

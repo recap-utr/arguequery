@@ -8,12 +8,19 @@ import typing as t
 from typing import Dict, List, Optional, Tuple, Union
 
 import arguebuf as ag
+from arg_services.graph.v1 import graph_pb2
 from arguequery.models.mapping import Mapping, SearchNode
 from arguequery.models.result import Result
 from arguequery.services import nlp
 
 logger = logging.getLogger("recap")
 from arguequery.config import config
+
+
+def _init_mp():
+    # Each worker needs its own client.
+    # Otherwise, the client will be protected by a mutex, resulting in worse runtimes.
+    nlp.client = nlp.init_client()
 
 
 def mac(
@@ -28,7 +35,14 @@ def fac(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
 
     results: List[t.Tuple[str, float]] = []
     params = [
-        (case_graph, case_id, query, i, len(cases))
+        (
+            case_graph.to_protobuf(),
+            case_id,
+            query.to_protobuf(),
+            i,
+            len(cases),
+            config.cbr.queue_limit,
+        )
         for (i, (case_id, case_graph)) in enumerate(cases.items())
     ]
 
@@ -37,7 +51,11 @@ def fac(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
     if config.debug:
         results = [a_star_search(*param) for param in params]
     else:
-        with multiprocessing.Pool() as pool:
+        # If we do no 'reset' the cache, it is copied to every multiprocess.
+        # As this is quite slow for large vectors, we just reset it.
+        nlp.vector_cache = {}
+
+        with multiprocessing.Pool(initializer=_init_mp) as pool:
             results = pool.starmap(a_star_search, params)
 
     return dict(results)
@@ -45,13 +63,16 @@ def fac(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
 
 # According to Bergmann and Gil, 2014
 def a_star_search(
-    case: ag.Graph,
+    case_pb: graph_pb2.Graph,
     case_id: str,
-    query: ag.Graph,
+    query_pb: graph_pb2.Graph,
     current_iteration: int,
     total_iterations: int,
+    queue_limit: int,
 ) -> t.Tuple[str, float]:
     """Perform an A* analysis of the case base and the query"""
+    case = ag.Graph.from_protobuf(case_pb)
+    query = ag.Graph.from_protobuf(query_pb)
 
     q: List[SearchNode] = []
     s0 = SearchNode(
@@ -64,7 +85,7 @@ def a_star_search(
     bisect.insort(q, s0)
 
     while q[-1].nodes or q[-1].edges:
-        q = _expand(q, case, query)
+        q = _expand(q, case, query, queue_limit)
 
     candidate = q[-1]
 
@@ -75,7 +96,9 @@ def a_star_search(
     return (case_id, candidate.mapping.similarity)
 
 
-def _expand(q: List[SearchNode], case: ag.Graph, query: ag.Graph) -> List[SearchNode]:
+def _expand(
+    q: List[SearchNode], case: ag.Graph, query: ag.Graph, queue_limit: int
+) -> List[SearchNode]:
     """Expand a given node and its queue"""
 
     s = q[-1]
@@ -103,7 +126,7 @@ def _expand(q: List[SearchNode], case: ag.Graph, query: ag.Graph) -> List[Search
         else:
             s.remove(query_obj)
 
-    return q[len(q) - config.cbr.queue_limit :] if config.cbr.queue_limit > 0 else q
+    return q[len(q) - queue_limit :] if queue_limit > 0 else q
 
 
 def select1(

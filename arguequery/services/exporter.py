@@ -9,7 +9,9 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import arguebuf as ag
 import numpy as np
+from arg_services.retrieval.v1 import retrieval_pb2
 from arguequery.models.result import Result
 from arguequery.services.evaluation import Evaluation
 
@@ -17,15 +19,17 @@ logger = logging.getLogger("recap")
 from arguequery.config import config
 
 
-def get_results(results: List[Result]) -> List[Dict[str, Any]]:
+def get_results(
+    cases: t.Mapping[str, ag.Graph], results: t.Sequence[retrieval_pb2.RetrievedCase]
+) -> List[Dict[str, Any]]:
     """Convert the results to strings"""
 
     return [
         {
-            "name": result.graph.name,
+            "name": cases[result.id].name,
             "rank": i + 1,
             "similarity": np.around(result.similarity, 3),
-            "text": result.graph.name,  # TODO
+            "text": cases[result.id].name,  # TODO
         }
         for i, result in enumerate(results)
     ]
@@ -107,7 +111,9 @@ def get_results_aggregated(
 
 
 def export_results_aggregated(
-    evaluation: t.Mapping[str, t.Mapping[str, float]], duration: float, **kwargs
+    evaluation: t.Mapping[str, t.Mapping[str, float]],
+    duration: float,
+    parameters: t.Mapping[str, t.Any],
 ) -> None:
     """Write the results to file"""
 
@@ -128,6 +134,6 @@ def export_results_aggregated(
         json_out = {
             "Results": evaluation,
             "Duration": round(duration, 3),
-            "Parameters": kwargs,
+            "Parameters": parameters,
         }
         json.dump(json_out, f, indent=4, ensure_ascii=False)
