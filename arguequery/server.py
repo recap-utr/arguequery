@@ -41,22 +41,24 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
                     if filtered_mac_results
                     else cases
                 )
-                fac_results = retrieval.fac(fac_cases, query)
+                fac_results = retrieval.fac(fac_cases, query, req.mapping_algorithm)
 
             filtered_fac_results = _filter(_sort(fac_results), req.limit)
             filtered_results = filtered_fac_results or filtered_mac_results
 
             return retrieval_pb2.RetrieveResponse(
-                results=[
+                ranking=[
                     retrieval_pb2.RetrievedCase(id=key, similarity=sim)
                     for key, sim in filtered_results
                 ],
-                mac_results=[
+                mac_ranking=[
                     retrieval_pb2.RetrievedCase(id=key, similarity=sim)
                     for key, sim in filtered_mac_results
                 ],
-                fac_results=[
-                    retrieval_pb2.RetrievedCase(id=key, similarity=sim)
+                fac_ranking=[
+                    retrieval_pb2.RetrievedMapping(
+                        case=retrieval_pb2.RetrievedCase(id=key, similarity=sim)
+                    )
                     for key, sim in filtered_fac_results
                 ],
             )

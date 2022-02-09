@@ -73,11 +73,12 @@ def main() -> None:
         mac_export = None
         fac_export = None
 
-        if mac_results := res.mac_results:
+        if mac_results := res.mac_ranking:
             mac_export = exporter.get_results(cases, mac_results)
             evaluation = Evaluation(cases, mac_results, query)
 
-        if fac_results := res.fac_results:
+        if res.fac_ranking:
+            fac_results = [result.case for result in res.fac_ranking]
             fac_export = exporter.get_results(cases, fac_results)
             evaluation = Evaluation(cases, fac_results, query)
 

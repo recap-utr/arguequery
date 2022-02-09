@@ -1,6 +1,6 @@
 [[package]]
 name = "arg-services"
-version = "0.1.25"
+version = "0.1.27"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
@@ -13,7 +13,7 @@ protobuf = ">=3.15.8,<4.0.0"
 
 [[package]]
 name = "arguebuf"
-version = "0.2.12"
+version = "0.2.15"
 description = "A library for loading argument graphs in various formats (e.g., AIF)."
 category = "main"
 optional = false
@@ -258,11 +258,11 @@ wmd = ["gensim (>=4.1.2,<5.0.0)"]
 
 [[package]]
 name = "nltk"
-version = "3.6.7"
+version = "3.7"
 description = "Natural Language Toolkit"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 click = "*"
@@ -271,7 +271,7 @@ regex = ">=2021.8.3"
 tqdm = "*"
 
 [package.extras]
-all = ["matplotlib", "numpy", "pyparsing", "python-crfsuite", "requests", "scikit-learn", "scipy", "twython"]
+all = ["numpy", "pyparsing", "scipy", "matplotlib", "twython", "requests", "scikit-learn", "python-crfsuite"]
 corenlp = ["requests"]
 machine_learning = ["numpy", "python-crfsuite", "scikit-learn", "scipy"]
 plot = ["matplotlib"]
@@ -646,16 +646,16 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"
-content-hash = "c05273fe91a817110a152059352ce2a2a8bd878e41cf2b00c8760dc6b905bca9"
+content-hash = "77e74e27cba135efaf622d5f7d4e425a93e08e13c633daf8a43393ddf98aed59"
 
 [metadata.files]
 arg-services = [
-    {file = "arg-services-0.1.25.tar.gz", hash = "sha256:2b6dc76eb212a1bb118bbf0158b34b4aecfd95e7e9d9b9eea72804b174938318"},
-    {file = "arg_services-0.1.25-py3-none-any.whl", hash = "sha256:acc20017aea86bd738a5c2fead1eec8e66857bd5f71c4a72848febb018d213ae"},
+    {file = "arg-services-0.1.27.tar.gz", hash = "sha256:4feca804992675bb80a8c30ac4fdeeca0e5e815f1d110f61169c9fee6bbb5ed1"},
+    {file = "arg_services-0.1.27-py3-none-any.whl", hash = "sha256:477f31096be5fb18244d8159fbc6de2bbefc48a9a4c76f1ff7bc17f3f1e1f3a6"},
 ]
 arguebuf = [
-    {file = "Arguebuf-0.2.12-py3-none-any.whl", hash = "sha256:aa48b0bd5be9bc28448a5feeed6663bdd234ddddb743b0b93f37d90b3a3cfbd9"},
-    {file = "Arguebuf-0.2.12.tar.gz", hash = "sha256:9b1e76e4dd4fd7249f17d4b0d2ede56bff28bf40a4a8a66f6a8579b6718088db"},
+    {file = "Arguebuf-0.2.15-py3-none-any.whl", hash = "sha256:ea0115f8711575dd24aec61cfcd12206a45b82f2cbbd197c29ff35da9c9942de"},
+    {file = "Arguebuf-0.2.15.tar.gz", hash = "sha256:d9a4a0b4a687128008d15d3f561b15e87d48102616112897dcac68de4771c2e5"},
 ]
 blis = [
     {file = "blis-0.7.5-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:5812a7c04561ae7332cf730f57d9f82cbd12c5f86a5bfad66ee244e51d06266d"},
@@ -947,8 +947,8 @@ nlp-service = [
     {file = "nlp_service-0.1.4-py3-none-any.whl", hash = "sha256:6426dfc58c6ca369b59ca3ae2ee163613e916fdfe18f468adcd90bb6a621622a"},
 ]
 nltk = [
-    {file = "nltk-3.6.7-py3-none-any.whl", hash = "sha256:22e97be5d6c784d93a52d17860515cc50c5cfcc620b1f5c3747765041255a01e"},
-    {file = "nltk-3.6.7.zip", hash = "sha256:51bf1aef5304740a708be7c8e683f7798f03dc5c7a7e7feb758be9e95f4585e3"},
+    {file = "nltk-3.7-py3-none-any.whl", hash = "sha256:ba3de02490308b248f9b94c8bc1ac0683e9aa2ec49ee78536d8667afb5e3eec8"},
+    {file = "nltk-3.7.zip", hash = "sha256:d6507d6460cec76d70afea4242a226a7542f85c669177b9c7f562b7cf1b05502"},
 ]
 numpy = [
     {file = "numpy-1.22.2-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:515a8b6edbb904594685da6e176ac9fbea8f73a5ebae947281de6613e27f1956"},
