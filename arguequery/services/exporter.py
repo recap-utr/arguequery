@@ -125,12 +125,6 @@ def export_results_aggregated(
     file = (results_path / timestamp).with_suffix(".json")
 
     with file.open("w") as f:
-        tex_values = []
-
-        for eval_type in evaluation.values():
-            for value in eval_type.values():
-                tex_values.append(r"\(" + str(round(value, 3)) + r"\)")
-
         json_out = {
             "Results": evaluation,
             "Duration": round(duration, 3),
