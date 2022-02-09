@@ -60,7 +60,7 @@ def main() -> None:
             limit=config.cbr.limit,
             mac_phase=config.cbr.mac,
             fac_phase=config.cbr.fac,
-            mapping_algorithm=retrieval_pb2.MappingAlgorithm.MAPPING_ALGORITHM_ASTAR,
+            mapping_algorithm=retrieval_pb2.MappingAlgorithm.MAPPING_ALGORITHM_ISOMORPHISM,
             nlp_config=nlp_pb2.NlpConfig(
                 language=config.nlp.language,
                 spacy_model="en_core_web_lg",

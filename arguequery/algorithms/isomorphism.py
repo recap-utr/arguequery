@@ -30,7 +30,9 @@ def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
         c = case.to_nx(atom_label=_atom_label, scheme_label=_scheme_label)
 
         # Search for subgraphs of 'c' in 'q'
-        matcher = morph.DiGraphMatcher(c, q, node_match=lambda x, y: x.label == y.label)
+        matcher = morph.DiGraphMatcher(
+            c, q, node_match=lambda x, y: x["label"] == y["label"]
+        )
         mappings: t.List[t.Mapping[str, str]] = list(
             matcher.subgraph_monomorphisms_iter()
         )
@@ -50,7 +52,11 @@ def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
 
             mapping_similarities[i] = sim / len(query.atom_nodes)
 
-        _, best_sim = max(mapping_similarities.items(), key=lambda x: x[1])
+        best_sim = 0
+
+        if mapping_similarities:
+            _, best_sim = max(mapping_similarities.items(), key=lambda x: x[1])
+
         similarities[case_id] = best_sim
 
     return similarities

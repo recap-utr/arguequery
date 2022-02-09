@@ -6,7 +6,7 @@ retrieval_url = "127.0.0.1:6789"
 [path]
 glob_pattern = "*.json"
 cases = "data/cases/english/microtexts-plain"
-queries = "data/queries/english/microtexts-plain"
+queries = "data/queries/english/microtexts-plain/all"
 benchmark = "data/benchmark/microtexts"
 results = "data/results"
 ontology = "ontology.yml"
