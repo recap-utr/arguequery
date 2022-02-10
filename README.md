@@ -14,17 +14,19 @@ In the following, we will only provide the `docker-compose` commands.
 To run the services, you need to create a file called `.env` in the project folder with the following contents:
 
 ```sh
-ARGUEQUERY_NLP_ADDRESS="nlp-service:5678"
-ARGUEQUERY_RETRIEVAL_ADDRESS="retrieval-service:6789"
+ARGUEQUERY_NLP_HOST="nlp-service"
+ARGUEQUERY_NLP_PORT="5678"
+ARGUEQUERY_RETRIEVAL_HOST="retrieval-service"
+ARGUEQUERY_RETRIEVAL_PORT="6789"
 ```
 
 ## Server
 
-If you want to perform a case-base retrieval with your own dataset, you only need to start the server:
+If you want to perform a case-base retrieval with your own dataset, you only need to start the retrieval server together with the NLP server:
 
-`docker-compose up server`
+`docker-compose up nlp-service retrieval-service`
 
-It will then listen on port `6789`.
+It will then listen on the port `ARGUEQUERY_RETRIEVAL_PORT`.
 
 ## Optional: Evaluation with Built-In Client
 

@@ -7,16 +7,16 @@ services:
       dockerfile: Dockerfile.nlp
     command:
       - nlp-service
-      - ${ARGUEQUERY_NLP_ADDRESS}
+      - ${ARGUEQUERY_NLP_HOST}:${ARGUEQUERY_NLP_PORT}
   retrieval-service:
     build: .
     ports:
-      - "6789:6789"
+      - "${ARGUEQUERY_RETRIEVAL_PORT}:${ARGUEQUERY_RETRIEVAL_PORT}"
     volumes:
       - .:/app
     command:
       - /wait
-      - ${ARGUEQUERY_NLP_ADDRESS}
+      - ${ARGUEQUERY_NLP_HOST}:${ARGUEQUERY_NLP_PORT}
       - --strict
       - --timeout=0
       - --
@@ -24,9 +24,9 @@ services:
       - -m
       - arguequery
       - --retrieval-address
-      - ${ARGUEQUERY_RETRIEVAL_ADDRESS}
+      - ${ARGUEQUERY_RETRIEVAL_HOST}:${ARGUEQUERY_RETRIEVAL_PORT}
       - --nlp-address
-      - ${ARGUEQUERY_NLP_ADDRESS}
+      - ${ARGUEQUERY_NLP_HOST}:${ARGUEQUERY_NLP_PORT}
   client:
     build: .
     depends_on:
@@ -35,7 +35,7 @@ services:
       - .:/app
     command:
       - /wait
-      - ${ARGUEQUERY_RETRIEVAL_ADDRESS}
+      - ${ARGUEQUERY_RETRIEVAL_HOST}:${ARGUEQUERY_RETRIEVAL_PORT}
       - --strict
       - --timeout=0
       - --
@@ -43,4 +43,4 @@ services:
       - -m
       - arguequery.client
       - --retrieval-address
-      - ${ARGUEQUERY_RETRIEVAL_ADDRESS}
+      - ${ARGUEQUERY_RETRIEVAL_HOST}:${ARGUEQUERY_RETRIEVAL_PORT}
