@@ -40,9 +40,11 @@ class Evaluation:
         results: t.Sequence[retrieval_pb2.RetrievedCase],
         query_file: Path,
     ) -> None:
-        benchmark_file = Path(config.path.benchmark_rankings) / query_file.relative_to(
-            Path(config.path.queries)
-        ).with_suffix(".json")
+        benchmark_file = Path(
+            config.client.path.benchmark_rankings
+        ) / query_file.relative_to(Path(config.client.path.queries)).with_suffix(
+            ".json"
+        )
 
         with benchmark_file.open("r") as f:
             data = json.load(f)
@@ -146,7 +148,7 @@ class Evaluation:
 
     def _ndcg(self) -> None:
         ranking_inv = {
-            name: config.cbr.max_user_rank + 1 - rank
+            name: config.client.evaluation.max_user_rank + 1 - rank
             for name, rank in self.user_rankings.items()
         }
         results_ratings = [

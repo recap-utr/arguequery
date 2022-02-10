@@ -188,7 +188,7 @@ def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> FacResults:
             query,
             i,
             len(cases),
-            config.cbr.queue_limit,
+            config.server.astar_queue_limit,
         )
         for (i, (case_id, case_graph)) in enumerate(cases.items())
     ]

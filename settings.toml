@@ -3,9 +3,14 @@ debug = true
 nlp_address = "127.0.0.1:5678"
 retrieval_address = "127.0.0.1:6789"
 
-[path]
-scheme_ontology = "ontology.yml"
 
+[server]
+scheme_ontology = "ontology.yml"
+astar_queue_limit = 10000
+
+
+[client]
+[client.path]
 cases = "data/cases/english/microtexts-plain"
 case_graphs_pattern = "*.json"
 
@@ -16,20 +21,17 @@ query_texts_pattern = "*.txt"
 benchmark_rankings = "data/benchmark/microtexts"
 evaluation_output = "data/results"
 
-[nlp]
+[client.request]
 language = "en"
-config = "default"
+nlp_config = "default"
 enforce_scheme_types = false
-use_scheme_ontology = false  # only relevant if 'enforce_scheme_types = true'
-
-[cbr]
+use_scheme_ontology = false                   # only relevant if 'enforce_scheme_types = true'
 mapping_algorithm = "MAPPING_ALGORITHM_ASTAR"
 limit = 10
 mac = true
 fac = true
-queue_limit = 10000
-max_user_rank = 3
 
-[export]
+[client.evaluation]
 individual_results = false
 aggregated_results = true
+max_user_rank = 3

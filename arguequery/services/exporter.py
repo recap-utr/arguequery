@@ -48,11 +48,13 @@ def export_results(
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 
-    results_path = Path(config.path.evaluation_output)
+    results_path = Path(config.client.path.evaluation_output)
     results_path.mkdir(parents=True, exist_ok=True)
 
     folder = (
-        results_path / timestamp / query_file.relative_to(Path(config.path.queries))
+        results_path
+        / timestamp
+        / query_file.relative_to(Path(config.client.path.queries))
     )
     fieldnames = ["name", "rank", "similarity", "text"]
 
@@ -121,7 +123,7 @@ def export_results_aggregated(
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 
-    results_path = Path(config.path.evaluation_output)
+    results_path = Path(config.client.path.evaluation_output)
     results_path.mkdir(parents=True, exist_ok=True)
 
     file = (results_path / timestamp).with_suffix(".json")

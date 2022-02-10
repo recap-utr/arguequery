@@ -26,7 +26,7 @@ app = typer.Typer()
 
 _nlp_configs = {
     "default": nlp_pb2.NlpConfig(
-        language=config.nlp.language,
+        language=config.client.request.language,
         spacy_model="en_core_web_lg",
         similarity_method=nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_COSINE,
     )
@@ -34,7 +34,7 @@ _nlp_configs = {
 
 
 @app.command()
-def main(retrieval_url: t.Optional[str] = None) -> None:
+def main(retrieval_address: t.Optional[str] = None) -> None:
     """Calculate similarity of queries and case base"""
 
     start_time = 0
@@ -43,24 +43,30 @@ def main(retrieval_url: t.Optional[str] = None) -> None:
     evaluations: List[t.Optional[Evaluation]] = []
 
     client = retrieval_pb2_grpc.RetrievalServiceStub(
-        grpc.insecure_channel(retrieval_url or config.retrieval_url)
+        grpc.insecure_channel(retrieval_address or config.retrieval_address)
     )
 
     cases: t.Dict[Path, ag.Graph] = {
         file: ag.Graph.from_file(file)
-        for file in Path(config.path.cases).glob(config.path.case_graphs_pattern)
+        for file in Path(config.client.path.cases).glob(
+            config.client.path.case_graphs_pattern
+        )
     }
     protobuf_cases = {
-        str(name.relative_to(config.path.cases)): graph.to_protobuf()
+        str(name.relative_to(config.client.path.cases)): graph.to_protobuf()
         for name, graph in cases.items()
     }
 
     queries: t.Dict[Path, t.Union[str, ag.Graph]] = {
         file: ag.Graph.from_file(file)
-        for file in Path(config.path.queries).glob(config.path.query_graphs_pattern)
+        for file in Path(config.client.path.queries).glob(
+            config.client.path.query_graphs_pattern
+        )
     }
 
-    for file in Path(config.path.queries).glob(config.path.query_texts_pattern):
+    for file in Path(config.client.path.queries).glob(
+        config.client.path.query_texts_pattern
+    ):
         with file.open("r", encoding="utf-8") as f:
             queries[file] = f.read()
 
@@ -69,15 +75,15 @@ def main(retrieval_url: t.Optional[str] = None) -> None:
     for query_file, query in queries.items():
         req = retrieval_pb2.RetrieveRequest(
             cases=protobuf_cases,
-            enforce_scheme_types=config.nlp.enforce_scheme_types,
-            use_scheme_ontology=config.nlp.use_scheme_ontology,
-            limit=config.cbr.limit,
-            mac_phase=config.cbr.mac,
-            fac_phase=config.cbr.fac,
+            enforce_scheme_types=config.client.request.enforce_scheme_types,
+            use_scheme_ontology=config.client.request.use_scheme_ontology,
+            limit=config.client.request.limit,
+            mac_phase=config.client.request.mac,
+            fac_phase=config.client.request.fac,
             mapping_algorithm=retrieval_pb2.MappingAlgorithm.Value(
-                config.cbr.mapping_algorithm
+                config.client.request.mapping_algorithm
             ),
-            nlp_config=_nlp_configs[config.nlp.config],
+            nlp_config=_nlp_configs[config.client.request.nlp_config],
         )
 
         if isinstance(query, ag.Graph):
@@ -106,7 +112,7 @@ def main(retrieval_url: t.Optional[str] = None) -> None:
 
         evaluations.append(evaluation)
 
-        if config.export.individual_results:
+        if config.client.evaluation.individual_results:
             exporter.export_results(
                 query_file,
                 mac_export,
@@ -118,7 +124,7 @@ def main(retrieval_url: t.Optional[str] = None) -> None:
     duration = timer() - start_time
     eval_dict = exporter.get_results_aggregated(evaluations)
 
-    if config.export.aggregated_results:
+    if config.client.evaluation.aggregated_results:
         exporter.export_results_aggregated(eval_dict, duration, config.as_dict())
         log.info("Aggregated Results were exported.")
 
