@@ -21,7 +21,9 @@ def add_services(server: grpc.Server):
 
 
 @app.command()
-def main(retrieval_addr: t.Optional[str] = None, nlp_address: t.Optional[str] = None):
+def main(
+    retrieval_address: t.Optional[str] = None, nlp_address: t.Optional[str] = None
+):
     """Main entry point for the server."""
 
     if nlp_address:
@@ -29,7 +31,7 @@ def main(retrieval_addr: t.Optional[str] = None, nlp_address: t.Optional[str] = 
         nlp.client = nlp.init_client()
 
     arg_services_helper.serve(
-        retrieval_addr or config.retrieval_address,
+        retrieval_address or config.retrieval_address,
         add_services,
         [arg_services_helper.full_service_name(retrieval_pb2, "RetrievalService")],
     )
