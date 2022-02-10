@@ -1,22 +1,46 @@
 version: "3"
 
 services:
-  nlp-server:
+  nlp-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.nlp
+    command:
+      - nlp-service
+      - ${ARGUEQUERY_NLP_ADDRESS}
+  retrieval-service:
     build: .
-    command: nlp-service 127.0.0.1:5678
-  server:
-    build: .
-    depends_on:
-      - nlp-server
     ports:
       - "6789:6789"
     volumes:
       - .:/app
-    command: /wait nlp-server:5678 --strict --timeout 0 -- python -m arguequery.server
+    command:
+      - /wait
+      - ${ARGUEQUERY_NLP_ADDRESS}
+      - --strict
+      - --timeout=0
+      - --
+      - python
+      - -m
+      - arguequery
+      - --retrieval-address
+      - ${ARGUEQUERY_RETRIEVAL_ADDRESS}
+      - --nlp-address
+      - ${ARGUEQUERY_NLP_ADDRESS}
   client:
     build: .
     depends_on:
-      - server
+      - retrieval-service
     volumes:
       - .:/app
-    command: /wait server:6789 --strict --timeout 0 -- python -m arguequery.client
+    command:
+      - /wait
+      - ${ARGUEQUERY_RETRIEVAL_ADDRESS}
+      - --strict
+      - --timeout=0
+      - --
+      - python
+      - -m
+      - arguequery.client
+      - --retrieval-address
+      - ${ARGUEQUERY_RETRIEVAL_ADDRESS}

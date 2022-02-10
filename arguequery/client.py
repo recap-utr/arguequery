@@ -8,9 +8,11 @@ from typing import List
 
 import arguebuf as ag
 import grpc
+import typer
 from arg_services.nlp.v1 import nlp_pb2
 from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
 
+from arguequery.config import config
 from arguequery.services import exporter, nlp, retrieval
 from arguequery.services.evaluation import Evaluation
 
@@ -20,7 +22,7 @@ log.setLevel(logging.INFO)
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.WARNING)
 
-from arguequery.config import config
+app = typer.Typer()
 
 _nlp_configs = {
     "default": nlp_pb2.NlpConfig(
@@ -31,7 +33,8 @@ _nlp_configs = {
 }
 
 
-def main() -> None:
+@app.command()
+def main(retrieval_url: t.Optional[str] = None) -> None:
     """Calculate similarity of queries and case base"""
 
     start_time = 0
@@ -40,9 +43,7 @@ def main() -> None:
     evaluations: List[t.Optional[Evaluation]] = []
 
     client = retrieval_pb2_grpc.RetrievalServiceStub(
-        grpc.insecure_channel(
-            config.microservices.retrieval, [("grpc.lb_policy_name", "round_robin")]
-        )
+        grpc.insecure_channel(retrieval_url or config.retrieval_url)
     )
 
     cases: t.Dict[Path, ag.Graph] = {
@@ -59,7 +60,7 @@ def main() -> None:
         for file in Path(config.path.queries).glob(config.path.query_graphs_pattern)
     }
 
-    for file in Path(config.path.queries).glob(config.path.glob_pattern):
+    for file in Path(config.path.queries).glob(config.path.query_texts_pattern):
         with file.open("r", encoding="utf-8") as f:
             queries[file] = f.read()
 
@@ -95,12 +96,12 @@ def main() -> None:
         fac_export = None
 
         if mac_results := res.mac_ranking:
-            mac_export = exporter.get_results(protobuf_cases, mac_results)
+            mac_export = exporter.get_results(mac_results)
             evaluation = Evaluation(cases, mac_results, query_file)
 
         if res.fac_ranking:
             fac_results = [result.case for result in res.fac_ranking]
-            fac_export = exporter.get_results(protobuf_cases, fac_results)
+            fac_export = exporter.get_results(fac_results)
             evaluation = Evaluation(cases, fac_results, query_file)
 
         evaluations.append(evaluation)
@@ -123,4 +124,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    app()

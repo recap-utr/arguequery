@@ -11,6 +11,13 @@ This app is developed using [poetry](https://python-poetry.org).
 In addition, we provide a docker-compose configuration for easy execution.
 In the following, we will only provide the `docker-compose` commands.
 
+To run the services, you need to create a file called `.env` in the project folder with the following contents:
+
+```sh
+ARGUEQUERY_NLP_ADDRESS="nlp-service:5678"
+ARGUEQUERY_RETRIEVAL_ADDRESS="retrieval-service:6789"
+```
+
 ## Server
 
 If you want to perform a case-base retrieval with your own dataset, you only need to start the server:

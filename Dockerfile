@@ -7,6 +7,8 @@ ARG PYTHON_VERSION=3.9
 
 FROM python:${PYTHON_VERSION}-slim
 
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 RUN apt update && \
@@ -21,8 +23,6 @@ RUN curl -sS -o /tmp/install-poetry.py https://raw.githubusercontent.com/python-
     python /tmp/install-poetry.py && \
     rm -f /tmp/install-poetry.py && \
     poetry config virtualenvs.create false
+
 COPY poetry.lock* pyproject.toml ./
 RUN poetry install --no-interaction --no-ansi --no-root
-
-RUN pip install nlp-service[server] \
-    && python -m spacy download en_core_web_lg

@@ -5,7 +5,6 @@ import arguebuf as ag
 import grpc
 from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
 
-from arguequery.config import config
 from arguequery.services import nlp, retrieval
 
 
@@ -90,24 +89,3 @@ def _filter(
 
 def _filter_names(results: t.Sequence[t.Tuple[str, float]], limit: int) -> t.List[str]:
     return [x[0] for x in _filter(results, limit)]
-
-
-def add_services(server: grpc.Server):
-    """Add the services to the grpc server."""
-
-    retrieval_pb2_grpc.add_RetrievalServiceServicer_to_server(
-        RetrievalService(), server
-    )
-
-
-if __name__ == "__main__":
-    host, port = config.microservices.retrieval.split(":")
-
-    arg_services_helper.serve(
-        host,
-        port,
-        add_services,
-        reflection_services=[
-            arg_services_helper.full_service_name(retrieval_pb2, "RetrievalService"),
-        ],
-    )
