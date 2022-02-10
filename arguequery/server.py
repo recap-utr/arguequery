@@ -101,7 +101,7 @@ def add_services(server: grpc.Server):
 
 
 if __name__ == "__main__":
-    host, port = config.retrieval_url.split(":")
+    host, port = config.microservices.retrieval.split(":")
 
     arg_services_helper.serve(
         host,

@@ -1,10 +1,22 @@
 version: "3"
 
 services:
-  app:
+  nlp-server:
     build: .
+    command: nlp-service 127.0.0.1:5678
+  server:
+    build: .
+    depends_on:
+      - nlp-server
     ports:
-      - "8888:80"
+      - "6789:80"
     volumes:
       - .:/app
-    command: python -m arguequery 0.0.0.0 80
+    command: /wait nlp-server:5678 -- python -m arguequery.server
+  client:
+    build: .
+    depends_on:
+      - server
+    volumes:
+      - .:/app
+    command: /wait server:6789 -- python -m arguequery.client

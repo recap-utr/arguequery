@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import arguebuf as ag
 import numpy as np
+from arg_services.graph.v1 import graph_pb2
 from arg_services.retrieval.v1 import retrieval_pb2
 from arguequery.services.evaluation import Evaluation
 
@@ -19,7 +20,8 @@ from arguequery.config import config
 
 
 def get_results(
-    cases: t.Mapping[str, ag.Graph], results: t.Sequence[retrieval_pb2.RetrievedCase]
+    cases: t.Mapping[str, graph_pb2.Graph],
+    results: t.Sequence[retrieval_pb2.RetrievedCase],
 ) -> List[Dict[str, Any]]:
     """Convert the results to strings"""
 
@@ -28,14 +30,14 @@ def get_results(
             "name": cases[result.id].name,
             "rank": i + 1,
             "similarity": np.around(result.similarity, 3),
-            "text": cases[result.id].name,  # TODO
+            # "text": "TODO"
         }
         for i, result in enumerate(results)
     ]
 
 
 def export_results(
-    query_file_name: str,
+    query_file: Path,
     mac_results: Optional[List[Dict[str, Any]]],
     fac_results: Optional[List[Dict[str, Any]]],
     evaluation: Optional[Evaluation],
@@ -47,10 +49,12 @@ def export_results(
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 
-    results_path = Path(config.path.results)
+    results_path = Path(config.path.evaluation_output)
     results_path.mkdir(parents=True, exist_ok=True)
 
-    folder = results_path / timestamp / query_file_name
+    folder = (
+        results_path / timestamp / query_file.relative_to(Path(config.path.queries))
+    )
     fieldnames = ["name", "rank", "similarity", "text"]
 
     if mac_results:
@@ -118,7 +122,7 @@ def export_results_aggregated(
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 
-    results_path = Path(config.path.results)
+    results_path = Path(config.path.evaluation_output)
     results_path.mkdir(parents=True, exist_ok=True)
 
     file = (results_path / timestamp).with_suffix(".json")

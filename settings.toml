@@ -1,15 +1,22 @@
 # If true, only one thread will be used (which decreases performance)
 debug = true
-nlp_url = "127.0.0.1:5678"
-retrieval_url = "127.0.0.1:6789"
+
+[microservices]
+nlp = "127.0.0.1:5678"
+retrieval = "127.0.0.1:6789"
 
 [path]
-glob_pattern = "*.json"
+scheme_ontology = "ontology.yml"
+
 cases = "data/cases/english/microtexts-plain"
+case_graphs_pattern = "*.json"
+
 queries = "data/queries/english/microtexts-plain/all"
-benchmark = "data/benchmark/microtexts"
-results = "data/results"
-ontology = "ontology.yml"
+query_graphs_pattern = "*.json"
+query_texts_pattern = "*.txt"
+
+benchmark_rankings = "data/benchmark/microtexts"
+evaluation_output = "data/results"
 
 [nlp]
 language = "en"

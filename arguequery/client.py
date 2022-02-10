@@ -41,27 +41,33 @@ def main() -> None:
 
     client = retrieval_pb2_grpc.RetrievalServiceStub(
         grpc.insecure_channel(
-            config.retrieval_url, [("grpc.lb_policy_name", "round_robin")]
+            config.microservices.retrieval, [("grpc.lb_policy_name", "round_robin")]
         )
     )
 
-    cases = {
-        file.name: ag.Graph.from_file(file)
-        for file in Path(config.path.cases).glob(config.path.glob_pattern)
+    cases: t.Dict[Path, ag.Graph] = {
+        file: ag.Graph.from_file(file)
+        for file in Path(config.path.cases).glob(config.path.case_graphs_pattern)
     }
-    protobuf_cases = {name: graph.to_protobuf() for name, graph in cases.items()}
+    protobuf_cases = {
+        str(name.relative_to(config.path.cases)): graph.to_protobuf()
+        for name, graph in cases.items()
+    }
 
-    queries = {
-        file.name: ag.Graph.from_file(file)
-        for file in Path(config.path.queries).glob(config.path.glob_pattern)
+    queries: t.Dict[Path, t.Union[str, ag.Graph]] = {
+        file: ag.Graph.from_file(file)
+        for file in Path(config.path.queries).glob(config.path.query_graphs_pattern)
     }
+
+    for file in Path(config.path.queries).glob(config.path.glob_pattern):
+        with file.open("r", encoding="utf-8") as f:
+            queries[file] = f.read()
 
     start_time = timer()
 
-    for query_key, query in queries.items():
+    for query_file, query in queries.items():
         req = retrieval_pb2.RetrieveRequest(
             cases=protobuf_cases,
-            query_graph=query.to_protobuf(),
             enforce_scheme_types=config.nlp.enforce_scheme_types,
             use_scheme_ontology=config.nlp.use_scheme_ontology,
             limit=config.cbr.limit,
@@ -72,6 +78,16 @@ def main() -> None:
             ),
             nlp_config=_nlp_configs[config.nlp.config],
         )
+
+        if isinstance(query, ag.Graph):
+            req.query_graph.CopyFrom(query.to_protobuf())
+        elif isinstance(query, str):
+            req.query_text = query
+        else:
+            raise ValueError(
+                f"Query '{query_file}' has the unsupported type '{type(query).__name__}'"
+            )
+
         res: retrieval_pb2.RetrieveResponse = client.Retrieve(req)
 
         evaluation = None
@@ -79,19 +95,19 @@ def main() -> None:
         fac_export = None
 
         if mac_results := res.mac_ranking:
-            mac_export = exporter.get_results(cases, mac_results)
-            evaluation = Evaluation(cases, mac_results, query)
+            mac_export = exporter.get_results(protobuf_cases, mac_results)
+            evaluation = Evaluation(cases, mac_results, query_file)
 
         if res.fac_ranking:
             fac_results = [result.case for result in res.fac_ranking]
-            fac_export = exporter.get_results(cases, fac_results)
-            evaluation = Evaluation(cases, fac_results, query)
+            fac_export = exporter.get_results(protobuf_cases, fac_results)
+            evaluation = Evaluation(cases, fac_results, query_file)
 
         evaluations.append(evaluation)
 
         if config.export.individual_results:
             exporter.export_results(
-                query_key,
+                query_file,
                 mac_export,
                 fac_export,
                 evaluation,

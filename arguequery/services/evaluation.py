@@ -36,11 +36,13 @@ class Evaluation:
 
     def __init__(
         self,
-        cases: t.Mapping[str, ag.Graph],
+        cases: t.Mapping[Path, ag.Graph],
         results: t.Sequence[retrieval_pb2.RetrievedCase],
-        query: ag.Graph,
+        query_file: Path,
     ) -> None:
-        benchmark_file = Path(config.path.benchmark, query.name).with_suffix(".json")
+        benchmark_file = Path(config.path.benchmark_rankings) / query_file.relative_to(
+            Path(config.path.queries)
+        ).with_suffix(".json")
 
         with benchmark_file.open("r") as f:
             data = json.load(f)
@@ -52,7 +54,7 @@ class Evaluation:
         self.system_rankings = {key: i + 1 for i, key in enumerate(ranking)}
         self.system_candidates = list(ranking)
 
-        self._calculate_metrics(cases)
+        self._calculate_metrics({case_file.name for case_file in cases})
 
     def as_dict(self):
         return {
@@ -70,9 +72,9 @@ class Evaluation:
             },
         }
 
-    def _calculate_metrics(self, cases: t.Mapping[str, ag.Graph]) -> None:
+    def _calculate_metrics(self, all_cases: t.AbstractSet[str]) -> None:
         relevant_keys = set(self.user_candidates)
-        not_relevant_keys = {key for key in cases if key not in relevant_keys}
+        not_relevant_keys = {key for key in all_cases if key not in relevant_keys}
 
         tp = relevant_keys.intersection(set(self.system_candidates))
         fp = not_relevant_keys.intersection(set(self.system_candidates))

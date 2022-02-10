@@ -49,7 +49,7 @@ class Ontology:
 
         Ontology._instance = self
 
-        with open(config.ontology, "r") as f:
+        with open(config.path.scheme_ontology, "r") as f:
             self._load_ontology(yaml.safe_load(f))
 
     def _load_ontology(

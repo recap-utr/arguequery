@@ -52,7 +52,7 @@ enforce_scheme_types = None
 
 def init_client():
     channel = grpc.insecure_channel(
-        config.nlp_url, [("grpc.lb_policy_name", "round_robin")]
+        config.microservices.nlp, [("grpc.lb_policy_name", "round_robin")]
     )
     return nlp_pb2_grpc.NlpServiceStub(channel)
 
