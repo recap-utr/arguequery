@@ -20,14 +20,13 @@ from arguequery.config import config
 
 
 def get_results(
-    cases: t.Mapping[str, graph_pb2.Graph],
     results: t.Sequence[retrieval_pb2.RetrievedCase],
 ) -> List[Dict[str, Any]]:
     """Convert the results to strings"""
 
     return [
         {
-            "name": cases[result.id].name,
+            "name": result.id,
             "rank": i + 1,
             "similarity": np.around(result.similarity, 3),
             # "text": "TODO"
