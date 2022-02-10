@@ -9,14 +9,14 @@ services:
     depends_on:
       - nlp-server
     ports:
-      - "6789:80"
+      - "6789:6789"
     volumes:
       - .:/app
-    command: /wait nlp-server:5678 -- python -m arguequery.server
+    command: /wait nlp-server:5678 --strict --timeout 0 -- python -m arguequery.server
   client:
     build: .
     depends_on:
       - server
     volumes:
       - .:/app
-    command: /wait server:6789 -- python -m arguequery.client
+    command: /wait server:6789 --strict --timeout 0 -- python -m arguequery.client

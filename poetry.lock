@@ -238,7 +238,7 @@ test = ["pytest (>=6.2)", "pytest-cov (>=2.12)", "codecov (>=2.1)"]
 
 [[package]]
 name = "nlp-service"
-version = "0.1.4"
+version = "0.1.5"
 description = "Microservice for NLP tasks using gRPC"
 category = "main"
 optional = false
@@ -646,7 +646,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"
-content-hash = "77e74e27cba135efaf622d5f7d4e425a93e08e13c633daf8a43393ddf98aed59"
+content-hash = "9ce4df4b9106632356320df6d74393e62036fd52c7447b5cd7d767bf0302f896"
 
 [metadata.files]
 arg-services = [
@@ -943,8 +943,8 @@ networkx = [
     {file = "networkx-2.6.3.tar.gz", hash = "sha256:c0946ed31d71f1b732b5aaa6da5a0388a345019af232ce2f49c766e2d6795c51"},
 ]
 nlp-service = [
-    {file = "nlp-service-0.1.4.tar.gz", hash = "sha256:47435e843c6e4615c93596c5b68eed1d5c4abfb0e6f353e7c3cb204c82d71bc1"},
-    {file = "nlp_service-0.1.4-py3-none-any.whl", hash = "sha256:6426dfc58c6ca369b59ca3ae2ee163613e916fdfe18f468adcd90bb6a621622a"},
+    {file = "nlp-service-0.1.5.tar.gz", hash = "sha256:800884f8497bb6d3ea13408b7c01367006f69066e4e1f6525a8d92f0570a3ace"},
+    {file = "nlp_service-0.1.5-py3-none-any.whl", hash = "sha256:9571a39955dc954e9a7fbc123026f98808e6267975a67445afd4632f90549229"},
 ]
 nltk = [
     {file = "nltk-3.7-py3-none-any.whl", hash = "sha256:ba3de02490308b248f9b94c8bc1ac0683e9aa2ec49ee78536d8667afb5e3eec8"},

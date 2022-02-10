@@ -1,23 +1,28 @@
 # https://stackoverflow.com/questions/53835198/integrating-python-poetry-with-docker
 # https://github.com/microsoft/vscode-dev-containers/blob/master/containers/python-3/.devcontainer/Dockerfile
+# https://github.com/nautobot/nautobot/blob/develop/docker/Dockerfile
 
-FROM python:3.10-slim
-ENV POETRY_VERSION=1.1.12
+ARG POETRY_VERSION=1.1.12
+ARG PYTHON_VERSION=3.9
+
+FROM python:${PYTHON_VERSION}-slim
 
 WORKDIR /app
 
-RUN apt update \
-    && apt install -y wget \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt update && \
+    apt install -y curl && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN wget -O /wait https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh \
-    && chmod u+x /wait
+RUN curl -sS -o /wait https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+    chmod u+x /wait
 
-RUN pip install "poetry==${POETRY_VERSION}" \
-    && poetry config virtualenvs.create false
-
+ENV PATH="/root/.local/bin:${PATH}"
+RUN curl -sS -o /tmp/install-poetry.py https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py && \
+    python /tmp/install-poetry.py && \
+    rm -f /tmp/install-poetry.py && \
+    poetry config virtualenvs.create
 COPY poetry.lock* pyproject.toml ./
-RUN poetry install --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi --no-root
 
 RUN pip install nlp-service[server] \
     && python -m spacy download en_core_web_lg

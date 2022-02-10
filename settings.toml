@@ -2,8 +2,8 @@
 debug = true
 
 [microservices]
-nlp = "127.0.0.1:5678"
-retrieval = "127.0.0.1:6789"
+nlp = "0.0.0.0:5678"
+retrieval = "0.0.0.0:6789"
 
 [path]
 scheme_ontology = "ontology.yml"

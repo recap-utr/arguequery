@@ -17,6 +17,8 @@ If you want to perform a case-base retrieval with your own dataset, you only nee
 
 `docker-compose up server`
 
+It will then listen on port `6789`.
+
 ## Optional: Evaluation with Built-In Client
 
 In addition to the retrieval server, we also provide a client to automatically evaluate the retrieval results.
