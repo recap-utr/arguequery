@@ -4,14 +4,12 @@ import json
 import logging
 import math
 import typing as t
-from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List
 
 import arguebuf as ag
 from arg_services.retrieval.v1 import retrieval_pb2
 from arguequery.libs.ndcg import ndcg
-from arguequery.models.result import Result
 
 logger = logging.getLogger("recap")
 from arguequery.config import config

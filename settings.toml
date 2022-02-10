@@ -13,10 +13,12 @@ ontology = "ontology.yml"
 
 [nlp]
 language = "en"
+config = "default"
 enforce_scheme_types = false
 use_scheme_ontology = false  # only relevant if 'enforce_scheme_types = true'
 
 [cbr]
+mapping_algorithm = "MAPPING_ALGORITHM_ASTAR"
 limit = 10
 mac = true
 fac = true

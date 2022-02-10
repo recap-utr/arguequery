@@ -5,16 +5,170 @@ import logging
 import multiprocessing
 import random
 import typing as t
-from typing import Dict, List, Optional, Tuple, Union
+from abc import ABC
+from dataclasses import dataclass, field
+from typing import List
 
 import arguebuf as ag
-from arg_services.retrieval.v1 import retrieval_pb2
-from arguequery.models.mapping import Mapping, SearchNode
-from arguequery.models.result import Result
+from arguequery.config import config
+from arguequery.models.mapping import FacMapping, FacResults
 from arguequery.services import nlp
 
 logger = logging.getLogger("recap")
-from arguequery.config import config
+
+
+@dataclass(frozen=True, eq=True)
+class GenericMapping(ABC):
+    query: t.Union[ag.Node, ag.Edge]
+    case: t.Union[ag.Node, ag.Edge]
+
+    def similarity(self) -> float:
+        return nlp.similarity(self.query, self.case)
+
+
+@dataclass(frozen=True, eq=True)
+class NodeMapping(GenericMapping):
+    """Store query and case node"""
+
+    query: ag.Node
+    case: ag.Node
+
+
+@dataclass(frozen=True, eq=True)
+class EdgeMapping(GenericMapping):
+    """Store query and case edge"""
+
+    query: ag.Edge
+    case: ag.Edge
+
+
+@dataclass
+class Mapping:
+    """Store all mappings and perform integrity checks on them"""
+
+    available_nodes: int
+    available_edges: int
+    node_mappings: t.Set[NodeMapping] = field(default_factory=set)
+    edge_mappings: t.Set[EdgeMapping] = field(default_factory=set)
+
+    def _is_node_mapped(self, nc: ag.Node) -> bool:
+        """Check if given node is already mapped"""
+
+        return nc in self.node_mappings
+
+    def _is_edge_mapped(self, ec: ag.Edge) -> bool:
+        """Check if given edge is already mapped"""
+
+        return ec in self.edge_mappings
+
+    def _are_nodes_mapped(self, nq: ag.Node, nc: ag.Node) -> bool:
+        """Check if the two given nodes are mapped to each other"""
+
+        return NodeMapping(nq, nc) in self.node_mappings
+
+    def is_legal_mapping(
+        self, q: t.Union[ag.Node, ag.Edge], c: t.Union[ag.Node, ag.Edge]
+    ) -> bool:
+        """Check if mapping is legal"""
+
+        if isinstance(q, ag.Node) and isinstance(c, ag.Node):
+            return self.is_legal_node_mapping(q, c)
+        elif isinstance(q, ag.Edge) and isinstance(c, ag.Edge):
+            return self.is_legal_edge_mapping(q, c)
+        return False
+
+    def is_legal_node_mapping(self, nq: ag.Node, nc: ag.Node) -> bool:
+        """Check if mapping is legal"""
+
+        return not (self._is_node_mapped(nc) or type(nc) != type(nq))
+
+    def is_legal_edge_mapping(self, eq: ag.Edge, ec: ag.Edge) -> bool:
+        """Check if mapping is legal"""
+
+        return not (
+            self._is_edge_mapped(ec)
+            or not self.is_legal_node_mapping(eq.source, ec.source)
+            or not self.is_legal_node_mapping(eq.target, ec.target)
+        )
+
+    def map(self, q: t.Union[ag.Node, ag.Edge], c: t.Union[ag.Node, ag.Edge]) -> None:
+        """Create a new mapping"""
+
+        if isinstance(q, ag.Node) and isinstance(c, ag.Node):
+            self.map_nodes(q, c)
+
+        elif isinstance(q, ag.Edge) and isinstance(c, ag.Edge):
+            self.map_edges(q, c)
+
+    def map_nodes(self, nq: ag.Node, nc: ag.Node) -> None:
+        """Create new node mapping"""
+
+        self.node_mappings.add(NodeMapping(nq, nc))
+
+    def map_edges(self, eq: ag.Edge, ec: ag.Edge) -> None:
+        """Create new edge mapping"""
+
+        self.edge_mappings.add(EdgeMapping(eq, ec))
+
+    def similarity(self) -> float:
+        """Compute similarity for all edge and node mappings
+
+        We are deliberately not using a standard mean here!
+        As the mapping may be uncomplete, we need to divide by the total number of nodes/edges.
+        """
+
+        return sum(
+            mapping.similarity()
+            for mapping in self.node_mappings.union(self.edge_mappings)
+        ) / (self.available_nodes + self.available_edges)
+
+
+class SearchNode:
+    """Specific search node"""
+
+    def __init__(
+        self,
+        available_nodes: int,
+        available_edges: int,
+        nodes: t.Iterable[ag.Node],
+        edges: t.Iterable[ag.Edge],
+        mapping_old: Mapping = None,
+    ) -> None:
+        self.nodes = set(nodes)
+        self.edges = set(edges)
+        self.f = 1.0
+
+        if mapping_old:
+            self.mapping = Mapping(
+                available_nodes,
+                available_edges,
+                set(mapping_old.node_mappings),
+                set(mapping_old.edge_mappings),
+            )
+        else:
+            self.mapping = Mapping(available_nodes, available_edges)
+
+    def __lt__(self, other) -> bool:
+        return self.f < other.f
+
+    def __le__(self, other) -> bool:
+        return self.f <= other.f
+
+    def __gt__(self, other) -> bool:
+        return self.f > other.f
+
+    def __ge__(self, other) -> bool:
+        return self.f >= other.f
+
+    def __eq__(self, other) -> bool:
+        return self.f == other.f
+
+    def remove(self, q: t.Union[ag.Node, ag.Edge]) -> None:
+        if isinstance(q, ag.Node):
+            self.nodes.remove(q)
+
+        elif isinstance(q, ag.Edge):
+            self.edges.remove(q)
 
 
 def _init_mp():
@@ -23,8 +177,10 @@ def _init_mp():
     nlp.client = nlp.init_client()
 
 
-def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
-    results: List[t.Tuple[str, float]] = []
+def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> FacResults:
+    similarities: t.Dict[str, float] = {}
+    mappings: t.Dict[str, t.Set[FacMapping]] = {}
+
     params = [
         (
             case_graph,
@@ -49,7 +205,14 @@ def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> t.Dict[str, float]:
         with multiprocessing.Pool(initializer=_init_mp) as pool:
             results = pool.starmap(a_star_search, params)
 
-    return dict(results)
+    for case_id, mapping in results:
+        similarities[case_id] = mapping.similarity()
+        mappings[case_id] = {
+            FacMapping(entry.query.id, entry.case.id, entry.similarity())
+            for entry in mapping.node_mappings
+        }
+
+    return FacResults(similarities, mappings)
 
 
 # According to Bergmann and Gil, 2014
@@ -60,7 +223,7 @@ def a_star_search(
     current_iteration: int,
     total_iterations: int,
     queue_limit: int,
-) -> t.Tuple[str, float]:
+) -> t.Tuple[str, Mapping]:
     """Perform an A* analysis of the case base and the query"""
     q: List[SearchNode] = []
     s0 = SearchNode(
@@ -81,7 +244,7 @@ def a_star_search(
         f"A* search for {case.name} finished. ({current_iteration}/{total_iterations})"
     )
 
-    return (case_id, candidate.mapping.similarity)
+    return (case_id, candidate.mapping)
 
 
 def _expand(
@@ -176,4 +339,4 @@ def h2(s: SearchNode, query: ag.Graph, case: ag.Graph) -> float:
 def g(s: SearchNode, query: ag.Graph) -> float:
     """Function to compute the costs of all previous steps"""
 
-    return s.mapping.similarity
+    return s.mapping.similarity()

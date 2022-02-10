@@ -13,13 +13,9 @@ from arguequery.config import config
 from arguequery.models.ontology import Ontology
 
 vector_cache = {}
-nlp_config = nlp_pb2.NlpConfig(
-    language=config.nlp.language,
-    spacy_model="en_core_web_lg",
-    similarity_method=nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_COSINE,
-)
-use_scheme_ontology = False
-enforce_scheme_types = False
+nlp_config = None
+use_scheme_ontology = None
+enforce_scheme_types = None
 
 # _model_params = {
 #     "spacy": nlp_pb2.NlpConfig(
@@ -63,7 +59,7 @@ def init_client():
 
 client = init_client()
 
-_use_token_vectors = lambda: nlp_config.similarity_method in (
+_use_token_vectors = lambda similarity_method: similarity_method in (
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DYNAMAX_DICE,
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DYNAMAX_JACCARD,
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_MAXPOOL_JACCARD,
@@ -72,13 +68,15 @@ _use_token_vectors = lambda: nlp_config.similarity_method in (
 
 
 def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
+    assert nlp_config is not None
+
     if isgenerator(texts):
         texts = list(texts)
 
     if new_texts := [text for text in texts if text not in vector_cache]:
         levels = (
             [nlp_pb2.EMBEDDING_LEVEL_TOKENS]
-            if _use_token_vectors()
+            if _use_token_vectors(nlp_config)
             else [nlp_pb2.EMBEDDING_LEVEL_DOCUMENT]
         )
 
@@ -94,7 +92,7 @@ def _vectors(texts: t.Iterable[str]) -> t.Tuple[np.ndarray, ...]:
             tuple(
                 tuple(np.array(token.vector) for token in x.tokens) for x in res.vectors
             )
-            if _use_token_vectors()
+            if _use_token_vectors(nlp_config)
             else tuple(np.array(x.document.vector) for x in res.vectors)
         )
 
@@ -113,6 +111,7 @@ def _similarities(text_tuples: t.Iterable[t.Tuple[str, str]]) -> t.Tuple[float, 
     vecs = _vectors(texts_chain)
 
     assert len(vecs) == len(texts_chain)
+    assert nlp_config is not None
 
     # Then, we construct an iterator over all received vectors
     vecs_iter = iter(vecs)
@@ -145,6 +144,8 @@ def similarities(
             result.append(_similarity(obj1.plain_text, obj2.plain_text))
 
         elif isinstance(obj1, ag.SchemeNode) and isinstance(obj2, ag.SchemeNode):
+            assert use_scheme_ontology is not None and enforce_scheme_types is not None
+
             if obj1.type and obj2.type and enforce_scheme_types:
                 if (
                     obj1.type == ag.SchemeType.SUPPORT

@@ -12,8 +12,9 @@ from arguequery.services import nlp, retrieval
 class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
     def Retrieve(self, req: retrieval_pb2.RetrieveRequest, ctx: grpc.ServicerContext):
         try:
-            mac_results = {}
-            fac_results = {}
+            mac_similarities = {}
+            fac_similarities = {}
+            fac_mappings = {}
             cases = {
                 key: ag.Graph.from_protobuf(value) for key, value in req.cases.items()
             }
@@ -30,21 +31,23 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
                     if req.WhichOneof("query") == "query_text"
                     else ag.Graph.from_protobuf(req.query_graph)
                 )
-                mac_results = retrieval.mac(cases, query)
+                mac_similarities = retrieval.mac(cases, query)
 
-            filtered_mac_results = _filter(_sort(mac_results), req.limit)
+            filtered_mac_similarities = _filter(_sort(mac_similarities), req.limit)
 
             if req.fac_phase and req.WhichOneof("query") == "query_graph":
                 query = ag.Graph.from_protobuf(req.query_graph)
                 fac_cases = (
-                    {key: cases[key] for key, _ in filtered_mac_results}
-                    if filtered_mac_results
+                    {key: cases[key] for key, _ in filtered_mac_similarities}
+                    if filtered_mac_similarities
                     else cases
                 )
                 fac_results = retrieval.fac(fac_cases, query, req.mapping_algorithm)
+                fac_similarities = fac_results.similarities
+                fac_mappings = fac_results.mappings
 
-            filtered_fac_results = _filter(_sort(fac_results), req.limit)
-            filtered_results = filtered_fac_results or filtered_mac_results
+            filtered_fac_similarities = _filter(_sort(fac_similarities), req.limit)
+            filtered_results = filtered_fac_similarities or filtered_mac_similarities
 
             return retrieval_pb2.RetrieveResponse(
                 ranking=[
@@ -53,13 +56,21 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
                 ],
                 mac_ranking=[
                     retrieval_pb2.RetrievedCase(id=key, similarity=sim)
-                    for key, sim in filtered_mac_results
+                    for key, sim in filtered_mac_similarities
                 ],
                 fac_ranking=[
                     retrieval_pb2.RetrievedMapping(
-                        case=retrieval_pb2.RetrievedCase(id=key, similarity=sim)
+                        case=retrieval_pb2.RetrievedCase(id=key, similarity=sim),
+                        node_mappings=[
+                            retrieval_pb2.Mapping(
+                                query_id=mapping.query_id,
+                                case_id=mapping.case_id,
+                                similarity=mapping.similarity,
+                            )
+                            for mapping in fac_mappings[key]
+                        ],
                     )
-                    for key, sim in filtered_fac_results
+                    for key, sim in filtered_fac_similarities
                 ],
             )
 

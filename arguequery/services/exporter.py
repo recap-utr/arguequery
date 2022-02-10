@@ -7,12 +7,11 @@ import time
 import typing as t
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import arguebuf as ag
 import numpy as np
 from arg_services.retrieval.v1 import retrieval_pb2
-from arguequery.models.result import Result
 from arguequery.services.evaluation import Evaluation
 
 logger = logging.getLogger("recap")

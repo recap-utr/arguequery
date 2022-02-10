@@ -4,14 +4,13 @@ import logging
 import typing as t
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import List
 
 import arguebuf as ag
 import grpc
 from arg_services.nlp.v1 import nlp_pb2
 from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
 
-from arguequery.models.result import Result
 from arguequery.services import exporter, nlp, retrieval
 from arguequery.services.evaluation import Evaluation
 
@@ -22,6 +21,14 @@ root_logger = logging.getLogger()
 root_logger.setLevel(logging.WARNING)
 
 from arguequery.config import config
+
+_nlp_configs = {
+    "default": nlp_pb2.NlpConfig(
+        language=config.nlp.language,
+        spacy_model="en_core_web_lg",
+        similarity_method=nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_COSINE,
+    )
+}
 
 
 def main() -> None:
@@ -60,12 +67,10 @@ def main() -> None:
             limit=config.cbr.limit,
             mac_phase=config.cbr.mac,
             fac_phase=config.cbr.fac,
-            mapping_algorithm=retrieval_pb2.MappingAlgorithm.MAPPING_ALGORITHM_ISOMORPHISM,
-            nlp_config=nlp_pb2.NlpConfig(
-                language=config.nlp.language,
-                spacy_model="en_core_web_lg",
-                similarity_method=nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_COSINE,
+            mapping_algorithm=retrieval_pb2.MappingAlgorithm.Value(
+                config.cbr.mapping_algorithm
             ),
+            nlp_config=_nlp_configs[config.nlp.config],
         )
         res: retrieval_pb2.RetrieveResponse = client.Retrieve(req)
 
