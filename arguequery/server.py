@@ -7,7 +7,6 @@ import typer
 from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
 
 from arguequery.config import config
-from arguequery.server import RetrievalService
 from arguequery.services import nlp, retrieval
 
 
