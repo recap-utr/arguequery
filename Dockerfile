@@ -19,9 +19,7 @@ RUN curl -sS -o /wait https://raw.githubusercontent.com/vishnubob/wait-for-it/ma
     chmod u+x /wait
 
 ENV PATH="/root/.local/bin:${PATH}"
-RUN curl -sS -o /tmp/install-poetry.py https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py && \
-    python /tmp/install-poetry.py && \
-    rm -f /tmp/install-poetry.py && \
+RUN curl -sS https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python - && \
     poetry config virtualenvs.create false
 
 COPY poetry.lock* pyproject.toml ./
