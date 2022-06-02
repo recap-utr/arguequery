@@ -29,8 +29,6 @@ services:
       - ${ARGUEQUERY_NLP_HOST}:${ARGUEQUERY_NLP_PORT}
   client:
     build: .
-    depends_on:
-      - retrieval-service
     volumes:
       - .:/app
     command:
