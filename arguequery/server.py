@@ -1,6 +1,6 @@
 import typing as t
 
-import arg_services_helper
+import arg_services
 import arguebuf as ag
 import grpc
 import typer
@@ -76,7 +76,7 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             )
 
         except Exception as e:
-            arg_services_helper.handle_except(e, ctx)
+            arg_services.handle_except(e, ctx)
 
 
 def _sort(results: t.Mapping[str, float]) -> t.List[t.Tuple[str, float]]:
@@ -114,10 +114,10 @@ def main(
         nlp.address = nlp_address
         nlp.client = nlp.init_client()
 
-    arg_services_helper.serve(
+    arg_services.serve(
         retrieval_address or config.retrieval_address,
         add_services,
-        [arg_services_helper.full_service_name(retrieval_pb2, "RetrievalService")],
+        [arg_services.full_service_name(retrieval_pb2, "RetrievalService")],
     )
 
 

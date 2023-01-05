@@ -2,10 +2,11 @@ import statistics
 import typing as t
 
 import arguebuf as ag
+from networkx.algorithms import isomorphism as morph
+
 from arguequery.config import config
 from arguequery.models.mapping import FacMapping, FacResults
 from arguequery.services import nlp
-from networkx.algorithms import isomorphism as morph
 
 
 def _atom_label(node: ag.AtomNode) -> str:
@@ -15,22 +16,26 @@ def _atom_label(node: ag.AtomNode) -> str:
 def _scheme_label(node: ag.SchemeNode) -> str:
     label = "SchemeNode"
 
-    if nlp.enforce_scheme_types and node.type:
-        label += f": {node.type.value}"
+    if nlp.enforce_scheme_types and node.scheme:
+        label += f": {type(node.scheme).__name__}"
 
-        if nlp.use_scheme_ontology and node.argumentation_scheme:
-            label += f": {node.argumentation_scheme.value}"
+        if nlp.use_scheme_ontology:
+            label += f": {node.scheme.value}"
 
     return label
 
 
 def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> FacResults:
-    q = query.to_nx(atom_label=_atom_label, scheme_label=_scheme_label)
+    q = query.to_nx(
+        atom_attrs={"label": _atom_label}, scheme_attrs={"label": _scheme_label}
+    )
     case_similarities: t.Dict[str, float] = {}
     case_mappings: t.Dict[str, t.Set[FacMapping]] = {}
 
     for case_id, case in cases.items():
-        c = case.to_nx(atom_label=_atom_label, scheme_label=_scheme_label)
+        c = case.to_nx(
+            atom_attrs={"label": _atom_label}, scheme_attrs={"label": _scheme_label}
+        )
 
         # Search for subgraphs of 'c' in 'q'
         matcher = morph.DiGraphMatcher(

@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 
 import arguebuf as ag
 import yaml
+from arguebuf.models.node import Scheme
+
 from arguequery.config import config
 
 
@@ -53,7 +55,10 @@ class Ontology:
             self._load_ontology(yaml.safe_load(f))
 
     def _load_ontology(
-        self, nodes_dict: Dict[str, Any], parent: OntologyNode = None, depth: int = 0
+        self,
+        nodes_dict: Dict[str, Any],
+        parent: t.Optional[OntologyNode] = None,
+        depth: int = 0,
     ) -> None:
         if nodes_dict is not None:
             current_node = self._add_node(nodes_dict["val"], depth, parent)
@@ -76,13 +81,8 @@ class Ontology:
         self.nodes[value] = new_node
         return new_node
 
-    def similarity(
-        self, scheme1: t.Optional[ag.Scheme], scheme2: t.Optional[ag.Scheme]
-    ) -> float:
+    def similarity(self, scheme1: ag.Support, scheme2: ag.Support) -> float:
         """Traverse the ontology tree and return the similarity of the common parent leaf"""
-
-        if not scheme1 or not scheme2:
-            return 1.0
 
         node1 = self.nodes.get(scheme1.value.lower(), self.root_node)
         node2 = self.nodes.get(scheme2.value.lower(), self.root_node)

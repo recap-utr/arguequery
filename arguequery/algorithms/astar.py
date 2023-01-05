@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 import arguebuf as ag
+
 from arguequery.config import config
 from arguequery.models.mapping import FacMapping, FacResults
 from arguequery.services import nlp
@@ -132,7 +133,7 @@ class SearchNode:
         available_edges: int,
         nodes: t.Iterable[ag.Node],
         edges: t.Iterable[ag.Edge],
-        mapping_old: Mapping = None,
+        mapping_old: t.Optional[Mapping] = None,
     ) -> None:
         self.nodes = set(nodes)
         self.edges = set(edges)

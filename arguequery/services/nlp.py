@@ -9,6 +9,7 @@ import grpc
 import nlp_service.similarity
 import numpy as np
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
+
 from arguequery.config import config
 from arguequery.models.ontology import Ontology
 
@@ -146,21 +147,17 @@ def similarities(
         elif isinstance(obj1, ag.SchemeNode) and isinstance(obj2, ag.SchemeNode):
             assert use_scheme_ontology is not None and enforce_scheme_types is not None
 
-            if obj1.type and obj2.type and enforce_scheme_types:
-                if (
-                    obj1.type == ag.SchemeType.SUPPORT
-                    and obj2.type == ag.SchemeType.SUPPORT
-                    and use_scheme_ontology
-                ):
-                    ontology = Ontology.instance()
-                    result.append(
-                        ontology.similarity(
-                            obj1.argumentation_scheme, obj2.argumentation_scheme
-                        )
-                    )
-
-                elif obj1.type == obj2.type:
-                    result.append(1.0)
+            if enforce_scheme_types:
+                if type(obj1.scheme) == type(obj2.scheme):
+                    if (
+                        use_scheme_ontology
+                        and isinstance(obj1.scheme, ag.Support)
+                        and isinstance(obj2.scheme, ag.Support)
+                    ):
+                        ontology = Ontology.instance()
+                        result.append(ontology.similarity(obj1.scheme, obj2.scheme))
+                    else:
+                        result.append(1.0)
 
                 else:
                     result.append(0.0)
