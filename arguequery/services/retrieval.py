@@ -4,11 +4,11 @@ import logging
 import typing as t
 
 import arguebuf as ag
-from arg_services.retrieval.v1.retrieval_pb2 import MappingAlgorithm
+
 from arguequery.algorithms import astar, isomorphism
-from arguequery.config import config
 from arguequery.models.mapping import FacResults
 from arguequery.services import nlp
+from arguequery.types import MappingAlgorithm
 
 logger = logging.getLogger("recap")
 
@@ -21,13 +21,11 @@ def mac(
 
 
 def fac(
-    cases: t.Mapping[str, ag.Graph], query: ag.Graph, algorithm: MappingAlgorithm.V
+    cases: t.Mapping[str, ag.Graph], query: ag.Graph, algorithm: MappingAlgorithm
 ) -> FacResults:
     """Perform an in-depth analysis of the prefilter results"""
 
-    if algorithm == MappingAlgorithm.MAPPING_ALGORITHM_ASTAR:
+    if algorithm == "astar":
         return astar.run(cases, query)
-    elif algorithm == MappingAlgorithm.MAPPING_ALGORITHM_ISOMORPHISM:
+    elif algorithm == "isomorphism":
         return isomorphism.run(cases, query)
-
-    raise NotImplementedError("The specified algorithm is currently not supported.")

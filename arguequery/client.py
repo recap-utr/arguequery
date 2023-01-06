@@ -15,6 +15,7 @@ from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
 from arguequery.config import config
 from arguequery.services import exporter, nlp, retrieval
 from arguequery.services.evaluation import Evaluation
+from arguequery.types import RetrieveRequestMeta
 
 log = logging.getLogger("recap")
 log.setLevel(logging.INFO)
@@ -74,16 +75,18 @@ def main(retrieval_address: t.Optional[str] = None) -> None:
 
     for query_file, query in queries.items():
         req = retrieval_pb2.RetrieveRequest(
-            cases=protobuf_cases,
-            enforce_scheme_types=config.client.request.enforce_scheme_types,
-            use_scheme_ontology=config.client.request.use_scheme_ontology,
+            case_graphs=protobuf_cases,
             limit=config.client.request.limit,
-            mac_phase=config.client.request.mac,
-            fac_phase=config.client.request.fac,
-            mapping_algorithm=retrieval_pb2.MappingAlgorithm.Value(
-                config.client.request.mapping_algorithm
-            ),
+            semantic_retrieval=config.client.request.mac,
+            structural_retrieval=config.client.request.fac,
             nlp_config=_nlp_configs[config.client.request.nlp_config],
+        )
+        req.extras.update(
+            RetrieveRequestMeta(
+                mapping_algorithm=config.client.request.mapping_algorithm,
+                use_scheme_ontology=config.client.request.use_scheme_ontology,
+                enforce_scheme_types=config.client.request.enforce_scheme_types,
+            ).to_dict()
         )
 
         if isinstance(query, ag.Graph):
@@ -101,12 +104,11 @@ def main(retrieval_address: t.Optional[str] = None) -> None:
         mac_export = None
         fac_export = None
 
-        if mac_results := res.mac_ranking:
+        if mac_results := res.semantic_ranking:
             mac_export = exporter.get_results(mac_results)
             evaluation = Evaluation(cases, mac_results, query_file)
 
-        if res.fac_ranking:
-            fac_results = [result.case for result in res.fac_ranking]
+        if fac_results := res.structural_ranking:
             fac_export = exporter.get_results(fac_results)
             evaluation = Evaluation(cases, fac_results, query_file)
 

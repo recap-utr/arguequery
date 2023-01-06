@@ -8,6 +8,7 @@ from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
 
 from arguequery.config import config
 from arguequery.services import nlp, retrieval
+from arguequery.types import RetrieveRequestMeta
 
 
 class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
@@ -17,16 +18,18 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             fac_similarities = {}
             fac_mappings = {}
             cases = {
-                key: ag.Graph.from_protobuf(value) for key, value in req.cases.items()
+                key: ag.Graph.from_protobuf(value)
+                for key, value in req.case_graphs.items()
             }
 
             # WARNING: The server currently is NOT thread safe due to the way the NLP config is handled
+            req_meta = RetrieveRequestMeta.from_dict(dict(req.extras.items()))
             nlp.nlp_config = req.nlp_config
             nlp.vector_cache = {}
-            nlp.use_scheme_ontology = req.use_scheme_ontology
-            nlp.enforce_scheme_types = req.enforce_scheme_types
+            nlp.use_scheme_ontology = req_meta.use_scheme_ontology
+            nlp.enforce_scheme_types = req_meta.enforce_scheme_types
 
-            if req.mac_phase or req.WhichOneof("query") == "query_text":
+            if req.semantic_retrieval or req.WhichOneof("query") == "query_text":
                 query = (
                     str(req.query_text)
                     if req.WhichOneof("query") == "query_text"
@@ -36,30 +39,31 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
 
             filtered_mac_similarities = _filter(_sort(mac_similarities), req.limit)
 
-            if req.fac_phase and req.WhichOneof("query") == "query_graph":
+            if req.structural_retrieval and req.WhichOneof("query") == "query_graph":
                 query = ag.Graph.from_protobuf(req.query_graph)
                 fac_cases = (
                     {key: cases[key] for key, _ in filtered_mac_similarities}
                     if filtered_mac_similarities
                     else cases
                 )
-                fac_results = retrieval.fac(fac_cases, query, req.mapping_algorithm)
+                fac_results = retrieval.fac(
+                    fac_cases, query, req_meta.mapping_algorithm
+                )
                 fac_similarities = fac_results.similarities
                 fac_mappings = fac_results.mappings
 
             filtered_fac_similarities = _filter(_sort(fac_similarities), req.limit)
-            filtered_results = filtered_fac_similarities or filtered_mac_similarities
 
             return retrieval_pb2.RetrieveResponse(
-                ranking=[
-                    retrieval_pb2.RetrievedCase(id=key, similarity=sim)
-                    for key, sim in filtered_results
-                ],
-                mac_ranking=[
+                semantic_ranking=[
                     retrieval_pb2.RetrievedCase(id=key, similarity=sim)
                     for key, sim in filtered_mac_similarities
                 ],
-                fac_ranking=[
+                structural_ranking=[
+                    retrieval_pb2.RetrievedCase(id=key, similarity=sim)
+                    for key, sim in filtered_fac_similarities
+                ],
+                structural_mapping=[
                     retrieval_pb2.RetrievedMapping(
                         case=retrieval_pb2.RetrievedCase(id=key, similarity=sim),
                         node_mappings=[

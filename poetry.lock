@@ -2,14 +2,14 @@
 
 [[package]]
 name = "arg-services"
-version = "1.0.2"
+version = "1.0.4"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "arg_services-1.0.2-py3-none-any.whl", hash = "sha256:cbd57faf45cd2b48955b2f8264f9bbaa2c3e037ba9aed085bc4b04d72765c2d1"},
-    {file = "arg_services-1.0.2.tar.gz", hash = "sha256:8d9fe7da3764b0d8bde9718c537c499263e2a47b8ee46c7b1d39fbf8297d2113"},
+    {file = "arg_services-1.0.4-py3-none-any.whl", hash = "sha256:6d5a4be22acdd2a2df08b72db4c9fbb25233f32c21a1791bc45014919fca8b9a"},
+    {file = "arg_services-1.0.4.tar.gz", hash = "sha256:f73531e5df9ceb479b898366b6afed0d4e03dd98af893ac57d368c4f6fbc42db"},
 ]
 
 [package.dependencies]
@@ -570,6 +570,27 @@ files = [
 
 [package.dependencies]
 marshmallow = ">=2.0.0"
+
+[[package]]
+name = "mashumaro"
+version = "3.3"
+description = "Fast serialization framework on top of dataclasses"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mashumaro-3.3-py3-none-any.whl", hash = "sha256:14d223d8479e5cbddbfd6980f380b14301f48498e458dc3cb1b8b96838c8f713"},
+    {file = "mashumaro-3.3.tar.gz", hash = "sha256:7ef12e2e81ad0ccb4560435ded1bec06ba38b941ce1470e82a13157c6b201661"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.1.0"
+
+[package.extras]
+msgpack = ["msgpack (>=0.5.6)"]
+orjson = ["orjson"]
+toml = ["tomli (>=1.1.0)", "tomli-w (>=1.0)"]
+yaml = ["pyyaml (>=3.13)"]
 
 [[package]]
 name = "murmurhash"
@@ -1558,4 +1579,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.11"
-content-hash = "1549539eb725ac4e5f732f774aaffa9c05465816d7e42ecf39c8aed2b6a6c04a"
+content-hash = "576f9861fca1bc373dcf3cfbf045910abfbf9caed90a678bfc656617e873b9e5"
