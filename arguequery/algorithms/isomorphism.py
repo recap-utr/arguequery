@@ -25,6 +25,7 @@ def _scheme_label(node: ag.SchemeNode) -> str:
     return label
 
 
+# TODO: NetworkX v3 has a new algorithm for subgraph isomorphisms.
 def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> FacResults:
     q = query.to_nx(
         atom_attrs={"label": _atom_label}, scheme_attrs={"label": _scheme_label}

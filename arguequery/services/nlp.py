@@ -17,6 +17,8 @@ vector_cache = {}
 nlp_config = None
 use_scheme_ontology = None
 enforce_scheme_types = None
+query_text = None
+case_texts = None
 
 # _model_params = {
 #     "spacy": nlp_pb2.NlpConfig(
@@ -132,6 +134,7 @@ GraphElement = t.Union[ag.Node, ag.Edge, ag.Graph, str]
 
 
 def _graph2text(g: ag.Graph) -> str:
+    # TODO
     return " ".join(node.plain_text for node in g.atom_nodes.values())
 
 

@@ -28,6 +28,8 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             nlp.vector_cache = {}
             nlp.use_scheme_ontology = req_meta.use_scheme_ontology
             nlp.enforce_scheme_types = req_meta.enforce_scheme_types
+            nlp.query_text = req_meta.query_text
+            nlp.case_texts = req_meta.case_texts
 
             if req.semantic_retrieval or req.WhichOneof("query") == "query_text":
                 query = (

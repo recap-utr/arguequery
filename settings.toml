@@ -25,8 +25,8 @@ evaluation_output = "data/results"
 language = "en"
 nlp_config = "default"
 enforce_scheme_types = false
-use_scheme_ontology = false                   # only relevant if 'enforce_scheme_types = true'
-mapping_algorithm = "MAPPING_ALGORITHM_ASTAR"
+use_scheme_ontology = false  # only relevant if 'enforce_scheme_types = true'
+mapping_algorithm = "astar"
 limit = 10
 mac = true
 fac = true

@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional
 
 import arguebuf as ag
 import yaml
-from arguebuf.models.node import Scheme
 
 from arguequery.config import config
 

@@ -5,16 +5,17 @@ description = ""
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.11"
+python = "^3.9,<3.11"
 numpy = "^1.24.1"
 scipy = "^1.10.0"
 typer = "^0.7.0"
 dynaconf = "^3.1.11"
-arguebuf = "^1.2.4"
 nlp-service = "^1.1.0"
 pyyaml = "^6.0"
 arg-services = "^1.0.4"
 mashumaro = "^3.3"
+arguebuf = { version = "^2.0.0b8", allow-prereleases = true }
+hydra-core = "^1.3.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

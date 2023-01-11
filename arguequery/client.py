@@ -12,6 +12,7 @@ import typer
 from arg_services.nlp.v1 import nlp_pb2
 from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
 
+from arguequery.algorithms.graph2text import graph2text
 from arguequery.config import config
 from arguequery.services import exporter, nlp, retrieval
 from arguequery.services.evaluation import Evaluation
@@ -53,10 +54,11 @@ def main(retrieval_address: t.Optional[str] = None) -> None:
             config.client.path.case_graphs_pattern
         )
     }
-    protobuf_cases = {
-        str(name.relative_to(config.client.path.cases)): graph.to_protobuf()
-        for name, graph in cases.items()
+    arguebuf_cases = {
+        str(key.relative_to(config.client.path.cases)): graph
+        for key, graph in cases.items()
     }
+    protobuf_cases = {key: graph.to_protobuf() for key, graph in arguebuf_cases.items()}
 
     queries: t.Dict[Path, t.Union[str, ag.Graph]] = {
         file: ag.Graph.from_file(file)
@@ -86,6 +88,13 @@ def main(retrieval_address: t.Optional[str] = None) -> None:
                 mapping_algorithm=config.client.request.mapping_algorithm,
                 use_scheme_ontology=config.client.request.use_scheme_ontology,
                 enforce_scheme_types=config.client.request.enforce_scheme_types,
+                query_text=query
+                if isinstance(query, str)
+                else graph2text(query, "dfs"),
+                case_texts={
+                    key: graph2text(graph, "dfs")
+                    for key, graph in arguebuf_cases.items()
+                },
             ).to_dict()
         )
 
