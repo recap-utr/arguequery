@@ -3,7 +3,9 @@ from dataclasses import dataclass
 
 from mashumaro.mixins.dict import DataClassDictMixin
 
-MappingAlgorithm = t.Literal["astar", "isomorphism"]
+MappingAlgorithm = t.Literal[
+    "astar_1", "astar_2", "astar_3", "greedy_1", "greedy_2", "isomorphism"
+]
 
 Graph2TextAlgorithm = t.Literal[
     "dfs", "dfs_reconstruction", "bfs", "random", "original_resource", "node_id"

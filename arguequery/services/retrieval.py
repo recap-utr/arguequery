@@ -25,7 +25,9 @@ def fac(
 ) -> FacResults:
     """Perform an in-depth analysis of the prefilter results"""
 
-    if algorithm == "astar":
+    if algorithm.startswith("astar"):
         return astar.run(cases, query)
     elif algorithm == "isomorphism":
         return isomorphism.run(cases, query)
+
+    raise ValueError(f"Algorithm {algorithm} not implemented.")

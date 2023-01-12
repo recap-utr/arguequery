@@ -90,9 +90,9 @@ def main(retrieval_address: t.Optional[str] = None) -> None:
                 enforce_scheme_types=config.client.request.enforce_scheme_types,
                 query_text=query
                 if isinstance(query, str)
-                else graph2text(query, "dfs"),
+                else graph2text(query, config.client.request.graph2text_algorithm),
                 case_texts={
-                    key: graph2text(graph, "dfs")
+                    key: graph2text(graph, config.client.request.graph2text_algorithm)
                     for key, graph in arguebuf_cases.items()
                 },
             ).to_dict()
