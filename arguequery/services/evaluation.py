@@ -9,9 +9,10 @@ from typing import Dict, List
 
 import arguebuf as ag
 from arg_services.retrieval.v1 import retrieval_pb2
+
 from arguequery.libs.ndcg import ndcg
 
-logger = logging.getLogger("recap")
+logger = logging.getLogger(__name__)
 from arguequery.config import config
 
 

@@ -10,7 +10,7 @@ from arguequery.models.mapping import FacResults
 from arguequery.services import nlp
 from arguequery.types import MappingAlgorithm
 
-logger = logging.getLogger("recap")
+logger = logging.getLogger(__name__)
 
 
 def mac(

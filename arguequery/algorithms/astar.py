@@ -15,7 +15,7 @@ from arguequery.config import config
 from arguequery.models.mapping import FacMapping, FacResults
 from arguequery.services import nlp
 
-logger = logging.getLogger("recap")
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, eq=True)

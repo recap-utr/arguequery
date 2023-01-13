@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import typing as t
 from pathlib import Path
@@ -11,6 +12,7 @@ import grpc
 import typer
 from arg_services.nlp.v1 import nlp_pb2
 from arg_services.retrieval.v1 import retrieval_pb2, retrieval_pb2_grpc
+from rich import print, print_json
 
 from arguequery.algorithms.graph2text import graph2text
 from arguequery.config import config
@@ -18,12 +20,7 @@ from arguequery.services import exporter, nlp, retrieval
 from arguequery.services.evaluation import Evaluation
 from arguequery.types import RetrieveRequestMeta
 
-log = logging.getLogger("recap")
-log.setLevel(logging.INFO)
-
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.WARNING)
-
+log = logging.getLogger(__name__)
 app = typer.Typer()
 
 _nlp_configs = {
@@ -135,10 +132,8 @@ def main(retrieval_address: t.Optional[str] = None) -> None:
     duration = timer() - start_time
     eval_dict = exporter.get_results_aggregated(evaluations)
 
+    print_json(json.dumps(eval_dict))
+
     if config.client.evaluation.aggregated_results:
         exporter.export_results_aggregated(eval_dict, duration, config.as_dict())
         log.info("Aggregated Results were exported.")
-
-
-if __name__ == "__main__":
-    app()

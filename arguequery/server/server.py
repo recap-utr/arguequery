@@ -13,6 +13,7 @@ from arguequery.types import RetrieveRequestMeta
 
 class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
     def Retrieve(self, req: retrieval_pb2.RetrieveRequest, ctx: grpc.ServicerContext):
+
         try:
             mac_similarities = {}
             fac_similarities = {}
