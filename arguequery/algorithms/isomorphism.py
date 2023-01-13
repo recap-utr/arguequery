@@ -4,7 +4,6 @@ import typing as t
 import arguebuf as ag
 from networkx.algorithms import isomorphism as morph
 
-from arguequery.config import config
 from arguequery.models.mapping import FacMapping, FacResults
 from arguequery.services import nlp
 
@@ -25,8 +24,15 @@ def _scheme_label(node: ag.SchemeNode) -> str:
     return label
 
 
-# TODO: NetworkX v3 has a new algorithm for subgraph isomorphisms.
 def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> FacResults:
+    """Compute subgraph isomorphisms between the cases and the query
+
+    Core idea:
+    Semantically irrelevant cases have already been filtered in the MAC phase.
+    Now, we only consider the structure and node types.
+    For instance, all atoms get their text removed.
+    """
+
     q = query.to_nx(
         atom_attrs={"label": _atom_label}, scheme_attrs={"label": _scheme_label}
     )

@@ -126,7 +126,3 @@ def main(
         add_services,
         [arg_services.full_service_name(retrieval_pb2, "RetrievalService")],
     )
-
-
-if __name__ == "__main__":
-    app()
