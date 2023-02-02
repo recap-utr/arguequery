@@ -2,29 +2,33 @@ import statistics
 import typing as t
 
 import arguebuf as ag
+from arg_services.cbr.v1beta.retrieval_pb2 import SchemeHandling
 from networkx.algorithms import isomorphism as morph
 
 from arguequery.models.mapping import FacMapping, FacResults
-from arguequery.services import nlp
+from arguequery.services.nlp import Nlp
 
 
 def _atom_label(node: ag.AtomNode) -> str:
     return "AtomNode"
 
 
-def _scheme_label(node: ag.SchemeNode) -> str:
+def _scheme_label(node: ag.SchemeNode, nlp: Nlp) -> str:
     label = "SchemeNode"
 
-    if nlp.enforce_scheme_types and node.scheme:
+    if nlp.scheme_handling == SchemeHandling.SCHEME_HANDLING_BINARY:
         label += f": {type(node.scheme).__name__}"
 
-        if nlp.use_scheme_ontology:
+    elif nlp.scheme_handling == SchemeHandling.SCHEME_HANDLING_TAXONOMY:
+        label += f": {type(node.scheme).__name__}"
+
+        if node.scheme is not None:
             label += f": {node.scheme.value}"
 
     return label
 
 
-def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> FacResults:
+def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph, nlp: Nlp) -> FacResults:
     """Compute subgraph isomorphisms between the cases and the query
 
     Core idea:
@@ -33,15 +37,19 @@ def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph) -> FacResults:
     For instance, all atoms get their text removed.
     """
 
-    q = query.to_nx(
-        atom_attrs={"label": _atom_label}, scheme_attrs={"label": _scheme_label}
+    q = ag.to_networkx(
+        query,
+        atom_attrs={"label": _atom_label},
+        scheme_attrs={"label": lambda node: _scheme_label(node, nlp)},
     )
     case_similarities: t.Dict[str, float] = {}
     case_mappings: t.Dict[str, t.Set[FacMapping]] = {}
 
     for case_id, case in cases.items():
-        c = case.to_nx(
-            atom_attrs={"label": _atom_label}, scheme_attrs={"label": _scheme_label}
+        c = ag.to_networkx(
+            case,
+            atom_attrs={"label": _atom_label},
+            scheme_attrs={"label": lambda node: _scheme_label(node, nlp)},
         )
 
         # Search for subgraphs of 'c' in 'q'

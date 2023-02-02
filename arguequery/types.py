@@ -1,15 +1,26 @@
+import enum
 import typing as t
 from dataclasses import dataclass
 
 from mashumaro.mixins.dict import DataClassDictMixin
 
-MappingAlgorithm = t.Literal[
-    "astar_1", "astar_2", "astar_3", "greedy_1", "greedy_2", "isomorphism_1"
-]
 
-Graph2TextAlgorithm = t.Literal[
-    "dfs", "dfs_reconstruction", "bfs", "random", "original_resource", "node_id"
-]
+class MappingAlgorithm(enum.Enum):
+    ASTAR_1 = "astar_1"
+    ASTAR_2 = "astar_2"
+    ASTAR_3 = "astar_3"
+    GREEDY_1 = "greedy_1"
+    GREEDY_2 = "greedy_2"
+    ISOMORPHISM_1 = "isomorphism_1"
+
+
+class Graph2TextAlgorithm(enum.Enum):
+    DFS = "dfs"
+    DFS_RECONSTRUCTION = "dfs_reconstruction"
+    BFS = "bfs"
+    RANDOM = "random"
+    ORIGINAL_RESOURCE = "original_resource"
+    NODE_ID = "node_id"
 
 
 @dataclass

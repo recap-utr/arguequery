@@ -7,8 +7,6 @@ from typing import Any, Dict, List, Optional
 import arguebuf as ag
 import yaml
 
-from arguequery.config import config
-
 
 @dataclass
 class OntologyNode:
@@ -50,7 +48,7 @@ class Ontology:
 
         Ontology._instance = self
 
-        with open(config.server.scheme_ontology, "r") as f:
+        with open("ontology.yml", "r") as f:
             self._load_ontology(yaml.safe_load(f))
 
     def _load_ontology(
