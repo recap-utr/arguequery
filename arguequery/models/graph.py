@@ -8,9 +8,9 @@ class Graph(ag.Graph):
     text: str
 
 
-def from_protobuf(obj: AnnotatedGraph) -> Graph:
+def load(obj: AnnotatedGraph) -> Graph:
     g = t.cast(
-        Graph, ag.from_protobuf(obj.graph, config=ag.ConverterConfig(GraphClass=Graph))
+        Graph, ag.load.protobuf(obj.graph, config=ag.load.Config(GraphClass=Graph))
     )
     g.text = obj.text
 

@@ -1,36 +1,36 @@
 import typing as t
 
 import arg_services
-import arguebuf as ag
 import grpc
-import typer
+import rich_click as click
+import typed_settings as ts
 from arg_services.cbr.v1beta import retrieval_pb2, retrieval_pb2_grpc
 
-from arguequery.models.graph import from_protobuf
+from arguequery.config import Config
+from arguequery.models.graph import load
 from arguequery.services import retrieval
 from arguequery.services.nlp import Nlp
-from arguequery.types import RetrieveRequestMeta
 
 _T = t.TypeVar("_T")
 
 
 class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
-    def __init__(self, nlp_address: str) -> None:
-        self.nlp_address = nlp_address
+    def __init__(self, config: Config) -> None:
+        self.config = config
 
     def Retrieve(self, req: retrieval_pb2.RetrieveRequest, ctx: grpc.ServicerContext):
         responses: list[retrieval_pb2.QueryResponse] = []
 
         try:
-            nlp = Nlp(self.nlp_address, req.nlp_config, req.scheme_handling)
-            cases = {key: from_protobuf(value) for key, value in req.cases.items()}
+            nlp = Nlp(self.config.nlp_address, req.nlp_config, req.scheme_handling)
+            cases = {key: load(value) for key, value in req.cases.items()}
 
             for query in req.queries:
                 mac_similarities = {}
                 fac_similarities = {}
                 fac_mappings = {}
 
-                query = from_protobuf(query)
+                query = load(query)
 
                 if req.semantic_retrieval:
                     mac_similarities = retrieval.mac(cases, query, nlp)
@@ -101,27 +101,24 @@ def _filter(results: t.Sequence[_T], limit: int) -> t.Sequence[_T]:
     return results[:limit] if limit else results
 
 
-app = typer.Typer()
-
-
-def _get_serve_callback(nlp_address: str):
+def _get_serve_callback(config: Config):
     def callback(server: grpc.Server):
         retrieval_pb2_grpc.add_RetrievalServiceServicer_to_server(
-            RetrievalService(nlp_address), server
+            RetrievalService(config), server
         )
 
     return callback
 
 
-@app.command()
+@click.command("arguequery")
+@ts.click_options(Config, "config")
 def main(
-    retrieval_address: str = "127.0.0.1:50055",
-    nlp_address: str = "127.0.0.1:50051",
+    config: Config,
 ):
     """Main entry point for the server."""
 
     arg_services.serve(
-        retrieval_address,
-        _get_serve_callback(nlp_address),
+        config.address,
+        _get_serve_callback(config),
         [arg_services.full_service_name(retrieval_pb2, "RetrievalService")],
     )

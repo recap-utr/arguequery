@@ -37,7 +37,7 @@ def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph, nlp: Nlp) -> FacResult
     For instance, all atoms get their text removed.
     """
 
-    q = ag.to_networkx(
+    q = ag.dump.networkx(
         query,
         atom_attrs={"label": _atom_label},
         scheme_attrs={"label": lambda node: _scheme_label(node, nlp)},
@@ -46,7 +46,7 @@ def run(cases: t.Mapping[str, ag.Graph], query: ag.Graph, nlp: Nlp) -> FacResult
     case_mappings: t.Dict[str, t.Set[FacMapping]] = {}
 
     for case_id, case in cases.items():
-        c = ag.to_networkx(
+        c = ag.dump.networkx(
             case,
             atom_attrs={"label": _atom_label},
             scheme_attrs={"label": lambda node: _scheme_label(node, nlp)},

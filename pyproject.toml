@@ -6,11 +6,12 @@ authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-typer = "^0.7.0"
 nlp-service = "^1.2.2"
 pyyaml = "^6.0"
 arg-services = "^1.1.0"
 arguebuf = { version = "^2.0.0b13", allow-prereleases = true }
+typed-settings = "^2.0.2"
+rich-click = "^1.6.1"
 
 [build-system]
 requires = ["poetry"]
