@@ -20,75 +20,71 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
 
     def Retrieve(self, req: retrieval_pb2.RetrieveRequest, ctx: grpc.ServicerContext):
         responses: list[retrieval_pb2.QueryResponse] = []
+        nlp = Nlp(self.config.nlp_address, req.nlp_config, req.scheme_handling)
+        cases = {key: load(value) for key, value in req.cases.items()}
 
-        try:
-            nlp = Nlp(self.config.nlp_address, req.nlp_config, req.scheme_handling)
-            cases = {key: load(value) for key, value in req.cases.items()}
+        for query in req.queries:
+            mac_similarities = {}
+            fac_similarities = {}
+            fac_mappings = {}
 
-            for query in req.queries:
-                mac_similarities = {}
-                fac_similarities = {}
-                fac_mappings = {}
+            query = load(query)
 
-                query = load(query)
+            if req.semantic_retrieval:
+                mac_similarities = retrieval.mac(cases, query, nlp)
 
-                if req.semantic_retrieval:
-                    mac_similarities = retrieval.mac(cases, query, nlp)
+            filtered_mac_similarities = _filter(_sort(mac_similarities), req.limit)
 
-                filtered_mac_similarities = _filter(_sort(mac_similarities), req.limit)
-
-                if req.structural_retrieval:
-                    fac_cases = (
-                        {key: cases[key] for key, _ in filtered_mac_similarities}
-                        if filtered_mac_similarities
-                        else cases
-                    )
-                    fac_results = retrieval.fac(
-                        fac_cases,
-                        query,
-                        req.mapping_algorithm,
-                        nlp,
-                        req.extras["astar_queue_limit"],
-                    )
-                    fac_similarities = fac_results.similarities
-                    fac_mappings = fac_results.mappings
-
-                filtered_fac_similarities = _filter(_sort(fac_similarities), req.limit)
-
-                responses.append(
-                    retrieval_pb2.QueryResponse(
-                        semantic_ranking=[
-                            retrieval_pb2.RetrievedCase(
-                                id=key, similarity=sim, graph=req.cases[key]
-                            )
-                            for key, sim in filtered_mac_similarities
-                        ],
-                        structural_ranking=[
-                            retrieval_pb2.RetrievedCase(
-                                id=key, similarity=sim, graph=req.cases[key]
-                            )
-                            for key, sim in filtered_fac_similarities
-                        ],
-                        structural_mapping=[
-                            retrieval_pb2.RetrievedMapping(
-                                case=retrieval_pb2.RetrievedCase(
-                                    id=key, similarity=sim, graph=req.cases[key]
-                                ),
-                                node_mappings=[
-                                    retrieval_pb2.MappedElement(
-                                        query_id=mapping.query_id,
-                                        case_id=mapping.case_id,
-                                        similarity=mapping.similarity,
-                                    )
-                                    for mapping in fac_mappings[key]
-                                ],
-                            )
-                            for key, sim in filtered_fac_similarities
-                        ],
-                    )
+            if req.structural_retrieval:
+                fac_cases = (
+                    {key: cases[key] for key, _ in filtered_mac_similarities}
+                    if filtered_mac_similarities
+                    else cases
                 )
-        except Exception as e:
-            arg_services.handle_except(e, ctx)
+                fac_results = retrieval.fac(
+                    fac_cases,
+                    query,
+                    req.mapping_algorithm,
+                    nlp,
+                    req.extras["astar_queue_limit"],
+                )
+                fac_similarities = fac_results.similarities
+                fac_mappings = fac_results.mappings
+
+            filtered_fac_similarities = _filter(_sort(fac_similarities), req.limit)
+
+            responses.append(
+                retrieval_pb2.QueryResponse(
+                    semantic_ranking=[
+                        retrieval_pb2.RetrievedCase(
+                            id=key, similarity=sim, graph=req.cases[key]
+                        )
+                        for key, sim in filtered_mac_similarities
+                    ],
+                    structural_ranking=[
+                        retrieval_pb2.RetrievedCase(
+                            id=key, similarity=sim, graph=req.cases[key]
+                        )
+                        for key, sim in filtered_fac_similarities
+                    ],
+                    structural_mapping=[
+                        retrieval_pb2.RetrievedMapping(
+                            case=retrieval_pb2.RetrievedCase(
+                                id=key, similarity=sim, graph=req.cases[key]
+                            ),
+                            node_mappings=[
+                                retrieval_pb2.MappedElement(
+                                    query_id=mapping.query_id,
+                                    case_id=mapping.case_id,
+                                    similarity=mapping.similarity,
+                                )
+                                for mapping in fac_mappings[key]
+                            ],
+                        )
+                        for key, sim in filtered_fac_similarities
+                    ],
+                )
+            )
 
         return retrieval_pb2.RetrieveResponse(query_responses=responses)
 
