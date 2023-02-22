@@ -73,7 +73,7 @@ class Nlp:
                 else tuple(np.array(x.document.vector) for x in res.vectors)
             )
 
-            self._vector_cache.update(dict(zip(new_texts, new_vectors)))
+            self._vector_cache.update(zip(new_texts, new_vectors))
 
         return tuple(self._vector_cache[text] for text in texts)
 
