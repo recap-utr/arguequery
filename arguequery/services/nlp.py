@@ -13,8 +13,8 @@ from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 
 from arguequery.models.ontology import Ontology
 
-GraphElement = t.Union[ag.AbstractNode, ag.Edge, str]
-Vector = nlp_service.types.NumpyVector
+GraphElement = t.TypeVar("GraphElement", ag.AbstractNode, ag.Edge, str)
+Vector = nlp_service.typing.NumpyVector
 
 
 class Nlp:
@@ -106,7 +106,10 @@ class Nlp:
         result = []
 
         for obj1, obj2 in objs:
-            if isinstance(obj1, ag.AtomNode) and isinstance(obj2, ag.AtomNode):
+            if isinstance(obj1, str) and isinstance(obj2, str):
+                result.append(self._similarity(obj1, obj2))
+
+            elif isinstance(obj1, ag.AtomNode) and isinstance(obj2, ag.AtomNode):
                 result.append(self._similarity(obj1.plain_text, obj2.plain_text))
 
             elif isinstance(obj1, ag.SchemeNode) and isinstance(obj2, ag.SchemeNode):
