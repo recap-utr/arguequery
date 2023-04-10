@@ -2,7 +2,6 @@ from __future__ import absolute_import, annotations
 
 import bisect
 import logging
-import multiprocessing
 import random
 import typing as t
 from abc import ABC
@@ -231,10 +230,6 @@ def a_star_search(
         q = _expand(q, case, query, queue_limit, nlp)
 
     candidate = q[-1]
-
-    logger.debug(
-        f"A* search for {case.name} finished. ({current_iteration}/{total_iterations})"
-    )
 
     return (case_id, candidate.mapping)
 

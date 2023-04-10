@@ -1,3 +1,4 @@
+import logging
 import typing as t
 
 import arg_services
@@ -13,17 +14,26 @@ from arguequery.services.nlp import Nlp
 
 _T = t.TypeVar("_T")
 
+log = logging.getLogger(__name__)
+
 
 class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
     def __init__(self, config: Config) -> None:
         self.config = config
 
+    def Similarities(
+        self, req: retrieval_pb2.SimilaritiesRequest, ctx: grpc.ServicerContext
+    ) -> retrieval_pb2.SimilaritiesResponse:
+        return retrieval_pb2.SimilaritiesResponse()
+
     def Retrieve(self, req: retrieval_pb2.RetrieveRequest, ctx: grpc.ServicerContext):
+        log.info(f"[{id(self)}] Processing request...")
         responses: list[retrieval_pb2.QueryResponse] = []
         nlp = Nlp(self.config.nlp_address, req.nlp_config, req.scheme_handling)
         cases = {key: load(value) for key, value in req.cases.items()}
 
-        for query in req.queries:
+        for i, query in enumerate(req.queries):
+            log.debug(f"[{id(self)}] Processing query {i + 1}/{len(req.queries)}...")
             mac_similarities = {}
             fac_similarities = {}
             fac_mappings = {}
