@@ -180,7 +180,6 @@ def run(
     similarities: t.Dict[str, float] = {}
     mappings: t.Dict[str, t.Set[FacMapping]] = {}
 
-    logger.info(f"A* Search for query '{query.name}'.")
     results = [
         a_star_search(
             case_graph,
