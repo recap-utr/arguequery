@@ -21,7 +21,7 @@ class Nlp:
     _client: nlp_pb2_grpc.NlpServiceStub
     _config: nlp_pb2.NlpConfig
     scheme_handling: SchemeHandling.ValueType
-    _vector_cache: dict[str, Vector] = {}
+    _vector_cache: dict[str, Vector]
 
     def __init__(
         self,
@@ -35,6 +35,7 @@ class Nlp:
         self._client = nlp_pb2_grpc.NlpServiceStub(channel)
         self._config = config
         self.scheme_handling = scheme_handling
+        self._vector_cache = {}
 
     @property
     def use_token_vectors(self):
