@@ -41,12 +41,18 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
                     if filtered_mac_similarities
                     else cases
                 )
+
+                try:
+                    astar_queue_limit = int(req.extras["astar_queue_limit"])  # type: ignore
+                except Exception:
+                    astar_queue_limit = 10000
+
                 fac_results = retrieval.fac(
                     fac_cases,
                     query,
                     req.mapping_algorithm,
                     nlp,
-                    req.extras["astar_queue_limit"],
+                    astar_queue_limit,
                 )
                 fac_similarities = fac_results.similarities
                 fac_mappings = fac_results.mappings
