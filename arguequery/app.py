@@ -24,7 +24,17 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
     def Similarities(
         self, req: retrieval_pb2.SimilaritiesRequest, ctx: grpc.ServicerContext
     ) -> retrieval_pb2.SimilaritiesResponse:
-        return retrieval_pb2.SimilaritiesResponse()
+        nlp = Nlp(self.config.nlp_address, req.nlp_config, req.scheme_handling)
+        semantic_similarities = nlp.similarities(
+            (case.text, req.query.text) for case in req.cases
+        )
+
+        return retrieval_pb2.SimilaritiesResponse(
+            similarities=[
+                retrieval_pb2.SimilarityResponse(semantic_similarity=sem_sim)
+                for sem_sim in semantic_similarities
+            ]
+        )
 
     def Retrieve(self, req: retrieval_pb2.RetrieveRequest, ctx: grpc.ServicerContext):
         log.info(f"[{id(self)}] Processing request...")
