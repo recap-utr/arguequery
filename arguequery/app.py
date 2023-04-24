@@ -123,13 +123,14 @@ def _filter(results: t.Sequence[_T], limit: int) -> t.Sequence[_T]:
     return results[:limit] if limit else results
 
 
-def _get_serve_callback(config: Config):
-    def callback(server: grpc.Server):
-        retrieval_pb2_grpc.add_RetrievalServiceServicer_to_server(
-            RetrievalService(config), server
-        )
+class ServiceAdder:
+    def __init__(self, config: Config):
+        self.config = config
 
-    return callback
+    def __call__(self, server: grpc.Server):
+        retrieval_pb2_grpc.add_RetrievalServiceServicer_to_server(
+            RetrievalService(self.config), server
+        )
 
 
 @click.command("arguequery")
@@ -141,6 +142,6 @@ def main(
 
     arg_services.serve(
         config.address,
-        _get_serve_callback(config),
+        ServiceAdder(config),
         [arg_services.full_service_name(retrieval_pb2, "RetrievalService")],
     )
