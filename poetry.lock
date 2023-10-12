@@ -43,22 +43,22 @@ graphviz = ["pygraphviz (>=1.10,<2.0)"]
 
 [[package]]
 name = "attrs"
-version = "22.2.0"
+version = "23.1.0"
 description = "Classes Without Boilerplate"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "attrs-22.2.0-py3-none-any.whl", hash = "sha256:29e95c7f6778868dbd49170f98f8818f78f3dc5e0e37c0b1f474e3561b240836"},
-    {file = "attrs-22.2.0.tar.gz", hash = "sha256:c9227bfc2f01993c03f68db37d1d15c9690188323c067c641f1a35ca58185f99"},
+    {file = "attrs-23.1.0-py3-none-any.whl", hash = "sha256:1f28b4522cdc2fb4256ac1a020c78acf9cba2c6b461ccd2c126f3aa8e8335d04"},
+    {file = "attrs-23.1.0.tar.gz", hash = "sha256:6279836d581513a26f1bf235f9acd333bc9115683f14f7e8fae46c98fc50e015"},
 ]
 
 [package.extras]
-cov = ["attrs[tests]", "coverage-enable-subprocess", "coverage[toml] (>=5.3)"]
-dev = ["attrs[docs,tests]"]
-docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-towncrier", "towncrier", "zope.interface"]
-tests = ["attrs[tests-no-zope]", "zope.interface"]
-tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy (>=0.971,<0.990)", "mypy (>=0.971,<0.990)", "pympler", "pympler", "pytest (>=4.3.0)", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-mypy-plugins", "pytest-xdist[psutil]", "pytest-xdist[psutil]"]
+cov = ["attrs[tests]", "coverage[toml] (>=5.3)"]
+dev = ["attrs[docs,tests]", "pre-commit"]
+docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-towncrier", "towncrier", "zope-interface"]
+tests = ["attrs[tests-no-zope]", "zope-interface"]
+tests-no-zope = ["cloudpickle", "hypothesis", "mypy (>=1.1.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
 
 [[package]]
 name = "blis"
@@ -1634,18 +1634,18 @@ telegram = ["requests"]
 
 [[package]]
 name = "typed-settings"
-version = "23.0.0"
+version = "23.0.1"
 description = "Typed settings based on attrs classes"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typed_settings-23.0.0-py3-none-any.whl", hash = "sha256:37afc76d32473d2c3c78a840a30b0116df0e9addcc0d35b3403d18773d2e4783"},
-    {file = "typed_settings-23.0.0.tar.gz", hash = "sha256:01aa4998ece58ffa965cf9e016dbcc897790d56a3b8c7ce6e5524c44dee828c3"},
+    {file = "typed_settings-23.0.1-py3-none-any.whl", hash = "sha256:5764c0d1be45ab81189a28c9d977cb373f8e458d1b41ff7073ef775659be6aee"},
+    {file = "typed_settings-23.0.1.tar.gz", hash = "sha256:827c224825565349a9503887b7d184d83b5f15ddb1a4eb032f9aff7c572d920e"},
 ]
 
 [package.dependencies]
-attrs = ">=22.1"
+attrs = ">=23.1"
 cattrs = ">=22.2"
 tomli = {version = ">=2", markers = "python_version < \"3.11\""}
 
