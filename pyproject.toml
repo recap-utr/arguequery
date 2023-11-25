@@ -5,13 +5,13 @@ description = ""
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.12"
-nlp-service = "^1.3.11"
+python = ">=3.10, <3.13"
+nlp-service = "^1.3"
 pyyaml = "^6.0"
-arg-services = "^1.3.0"
-arguebuf = { version = "^2.0.0b23", allow-prereleases = true }
-typed-settings = "^23.0.0"
-rich-click = "^1.6.1"
+arg-services = "^1.3"
+arguebuf = "^2.0"
+typed-settings = { version = "^23.1", extras = ["attrs", "cattrs"] }
+rich-click = "^1.7"
 
 [build-system]
 requires = ["poetry"]
