@@ -1,12 +1,11 @@
-from __future__ import absolute_import, annotations
+from __future__ import annotations
 
 import bisect
 import logging
 import random
 import typing as t
-from abc import ABC
 from dataclasses import dataclass, field
-from typing import List
+from functools import cached_property
 
 import arguebuf as ag
 
@@ -16,10 +15,9 @@ from arguequery.services.nlp import Nlp
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True, eq=True)
-class GenericMapping(ABC):
-    query: t.Union[ag.AbstractNode, ag.Edge]
-    case: t.Union[ag.AbstractNode, ag.Edge]
+class GenericMapping(t.Protocol):
+    query: t.Any
+    case: t.Any
     similarity: float
 
 
@@ -29,6 +27,7 @@ class NodeMapping(GenericMapping):
 
     query: ag.AbstractNode
     case: ag.AbstractNode
+    similarity: float = field(hash=False, compare=False)
 
 
 @dataclass(frozen=True, eq=True)
@@ -37,6 +36,7 @@ class EdgeMapping(GenericMapping):
 
     query: ag.Edge
     case: ag.Edge
+    similarity: float = field(hash=False, compare=False)
 
 
 @dataclass
@@ -46,27 +46,37 @@ class Mapping:
     nlp: Nlp
     available_nodes: int
     available_edges: int
-    node_mappings: t.Set[NodeMapping] = field(default_factory=set)
-    edge_mappings: t.Set[EdgeMapping] = field(default_factory=set)
+    node_mappings: set[NodeMapping] = field(default_factory=set)
+    edge_mappings: set[EdgeMapping] = field(default_factory=set)
+
+    @cached_property
+    def mapped_node_ids(self) -> set[str]:
+        """Return all mapped nodes"""
+
+        return {x.case.id for x in self.node_mappings}
+
+    @cached_property
+    def mapped_edge_ids(self) -> set[str]:
+        """Return all mapped edges"""
+
+        return {x.case.id for x in self.edge_mappings}
 
     def _is_node_mapped(self, nc: ag.AbstractNode) -> bool:
         """Check if given node is already mapped"""
 
-        return nc in self.node_mappings
+        return nc.id in self.mapped_node_ids
 
     def _is_edge_mapped(self, ec: ag.Edge) -> bool:
         """Check if given edge is already mapped"""
 
-        return ec in self.edge_mappings
+        return ec.id in self.mapped_edge_ids
 
     def _are_nodes_mapped(self, nq: ag.AbstractNode, nc: ag.AbstractNode) -> bool:
         """Check if the two given nodes are mapped to each other"""
 
-        return NodeMapping(nq, nc, self.nlp.similarity(nq, nc)) in self.node_mappings
+        return NodeMapping(nq, nc, 0) in self.node_mappings
 
-    def is_legal_mapping(
-        self, q: t.Union[ag.AbstractNode, ag.Edge], c: t.Union[ag.AbstractNode, ag.Edge]
-    ) -> bool:
+    def is_legal_mapping(self, q: t.Any, c: t.Any) -> bool:
         """Check if mapping is legal"""
 
         if isinstance(q, ag.AbstractNode) and isinstance(c, ag.AbstractNode):
@@ -89,9 +99,7 @@ class Mapping:
             or not self.is_legal_node_mapping(eq.target, ec.target)
         )
 
-    def map(
-        self, q: t.Union[ag.AbstractNode, ag.Edge], c: t.Union[ag.AbstractNode, ag.Edge]
-    ) -> None:
+    def map(self, q: t.Any, c: t.Any) -> None:
         """Create a new mapping"""
 
         if isinstance(q, ag.AbstractNode) and isinstance(c, ag.AbstractNode):
@@ -110,7 +118,7 @@ class Mapping:
 
         self.edge_mappings.add(EdgeMapping(eq, ec, self.nlp.similarity(eq, ec)))
 
-    @property
+    @cached_property
     def similarity(self) -> float:
         """Compute similarity for all edge and node mappings
 
@@ -166,7 +174,7 @@ class SearchNode:
     def __eq__(self, other) -> bool:
         return self.f == other.f
 
-    def remove(self, q: t.Union[ag.AbstractNode, ag.Edge]) -> None:
+    def remove(self, q: t.Any) -> None:
         if isinstance(q, ag.AbstractNode):
             self.nodes.remove(q)
 
@@ -177,8 +185,8 @@ class SearchNode:
 def run(
     cases: t.Mapping[str, ag.Graph], query: ag.Graph, nlp: Nlp, queue_limit: int
 ) -> FacResults:
-    similarities: t.Dict[str, float] = {}
-    mappings: t.Dict[str, t.Set[FacMapping]] = {}
+    similarities: dict[str, float] = {}
+    mappings: dict[str, set[FacMapping]] = {}
 
     results = [
         a_star_search(
@@ -212,9 +220,9 @@ def a_star_search(
     total_iterations: int,
     queue_limit: int,
     nlp: Nlp,
-) -> t.Tuple[str, Mapping]:
+) -> tuple[str, Mapping]:
     """Perform an A* analysis of the case base and the query"""
-    q: List[SearchNode] = []
+    q: list[SearchNode] = []
     s0 = SearchNode(
         nlp,
         len(query.nodes),
@@ -234,8 +242,8 @@ def a_star_search(
 
 
 def _expand(
-    q: List[SearchNode], case: ag.Graph, query: ag.Graph, queue_limit: int, nlp: Nlp
-) -> List[SearchNode]:
+    q: list[SearchNode], case: ag.Graph, query: ag.Graph, queue_limit: int, nlp: Nlp
+) -> list[SearchNode]:
     """Expand a given node and its queue"""
 
     s = q[-1]
@@ -269,7 +277,7 @@ def _expand(
 
 def select1(
     s: SearchNode, query: ag.Graph, case: ag.Graph
-) -> t.Tuple[
+) -> tuple[
     t.Optional[t.Union[ag.AbstractNode, ag.Edge, None]],
     t.Optional[t.Iterable[t.Union[ag.AbstractNode, ag.Edge]]],
 ]:
