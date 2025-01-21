@@ -1,0 +1,75 @@
+---
+name: default inference
+children:
+  - name: source based schemes
+    children:
+      - name: practical reasoning
+        children:
+          - name: instrumental practical reasoning
+            children:
+              - name: action to motive
+          - name: values
+            children:
+              - name: fairness
+              - name: unfairness
+          - name: value based practical reasoning
+            children:
+              - name: positive consequences
+              - name: negative consequences
+              - name: sunk costs
+      - name: epistemic reasoning
+        children:
+          - name: discovery argument
+            children:
+              - name: argument establishing rules
+                children:
+                  - name: a random sample to a population
+                  - name: best explanation
+              - name: argument finding entities
+                children:
+                  - name: sign
+                  - name: ignorance
+          - name: applying rules to cases
+            children:
+              - name: rule
+              - name: argument based on cases
+                children:
+                  - name: argument form an established rule
+                  - name: verbal classification
+                  - name: correlation to cause
+                    children:
+                      - name: cause to effect
+              - name: defeasible rule based argument
+                children:
+                  - name: example
+                  - name: analogy
+                  - name: precedent
+              - name: chained argument connecting rules and cases
+                children:
+                  - name: gradualism
+                  - name: precedent slippery slope argument
+                  - name: sorites slippery slope argument
+                  - name: alternatives (cognitive schemes)
+          - name: evidence to a hypothesis
+  - name: non source based schemes
+    children:
+      - name: position to know
+        children:
+          - name: expert opinion
+          - name: witness testimony
+      - name: ad hominem argument
+        children:
+          - name: direct ad hominem
+          - name: circumstantial ad hominem
+            children:
+              - name: misplaced priorities
+              - name: inconsistent commitment
+              - name: argument attacking personal credibility
+      - name: allegation of bias
+        children:
+          - name: poisoning the well by alleging group bias
+      - name: popular acceptance
+        children:
+          - name: popular opinion
+          - name: popular practice
+      - name: danger appeal

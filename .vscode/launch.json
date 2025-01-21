@@ -6,9 +6,8 @@
   "configurations": [
     {
       "name": "App",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
-      "console": "integratedTerminal",
       "module": "arguequery"
     }
   ]
