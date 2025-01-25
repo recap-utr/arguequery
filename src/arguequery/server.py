@@ -1,36 +1,11 @@
-from pathlib import Path
-
 import arg_services
 import cbrkit
 import grpc
-import nlp_service
 from arg_services.cbr.v1beta import retrieval_pb2, retrieval_pb2_grpc
-from sentence_transformers import SentenceTransformer
-from torch.cuda import is_available as is_cuda_available
 from typer import Typer
 
 from .model import EdgeData, GraphData, KeyType, NodeData, load_graph
 from .sim import Similarity
-
-
-def sentence_transformer_init(
-    model_name: str,
-) -> cbrkit.typing.BatchConversionFunc[str, cbrkit.typing.NumpyArray]:
-    # mps has issues with multiprocessing on macos
-    return cbrkit.sim.embed.sentence_transformers(
-        SentenceTransformer(model_name, device="cuda" if is_cuda_available() else "cpu")
-    )
-
-
-def init_nlp(config: nlp_service.NlpConfig) -> nlp_service.Nlp:
-    return nlp_service.Nlp(
-        config,
-        cache_dir=Path("data"),
-        autodump=True,
-        provider_init={
-            nlp_service.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: sentence_transformer_init
-        },
-    )
 
 
 class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
@@ -38,7 +13,8 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
         self, request: retrieval_pb2.SimilaritiesRequest, context: grpc.ServicerContext
     ) -> retrieval_pb2.SimilaritiesResponse:
         similarity = Similarity(
-            init_nlp(request.nlp_config),
+            request.nlp_config,
+            None,
             request.mapping_algorithm,
             request.mapping_algorithm_variant,
             request.scheme_handling,
@@ -94,7 +70,7 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
         self, request: retrieval_pb2.RetrieveRequest, context: grpc.ServicerContext
     ) -> retrieval_pb2.RetrieveResponse:
         try:
-            retrievers: list[
+            retrievers: cbrkit.typing.MaybeFactories[
                 cbrkit.typing.RetrieverFunc[
                     KeyType,
                     cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
@@ -102,7 +78,8 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
                 ]
             ] = []
             similarity = Similarity(
-                init_nlp(request.nlp_config),
+                request.nlp_config,
+                request.limit,
                 request.mapping_algorithm,
                 request.mapping_algorithm_variant,
                 request.scheme_handling,
@@ -110,20 +87,11 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             )
 
             if request.semantic_retrieval:
-                retrievers.append(
-                    cbrkit.retrieval.dropout(
-                        similarity.retriever_mac,
-                        limit=request.limit,
-                    )
-                )
+                retrievers.append(similarity.retriever_mac)
 
             if request.structural_retrieval:
-                retrievers.append(
-                    cbrkit.retrieval.dropout(
-                        similarity.retriever_fac,
-                        limit=request.limit,
-                    )
-                )
+                retrievers.append(similarity.retriever_fac_precompute)
+                retrievers.append(similarity.retriever_fac)
 
             queries = {key: load_graph(query) for key, query in request.queries.items()}
             cases = {key: load_graph(value) for key, value in request.cases.items()}

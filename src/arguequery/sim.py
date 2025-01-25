@@ -1,5 +1,6 @@
 import functools
 from dataclasses import dataclass
+from pathlib import Path
 from typing import cast
 
 import arguebuf
@@ -14,6 +15,24 @@ from arguequery.model import (
     KeyType,
     NodeData,
     SchemeData,
+)
+
+# def sentence_transformer_init(
+#     model_name: str,
+# ) -> cbrkit.typing.BatchConversionFunc[str, cbrkit.typing.NumpyArray]:
+#     # mps has issues with multiprocessing on macos
+#     return cbrkit.sim.embed.sentence_transformers(
+#         SentenceTransformer(model_name, device="cuda" if is_cuda_available() else "cpu")
+#     )
+
+nlp_with_models = nlp_service.Nlp(
+    cache_dir=Path("data"),
+    autodump=True,
+)
+nlp_without_models = nlp_service.Nlp(
+    cache_dir=Path("data"),
+    autodump=False,
+    provider_init=None,
 )
 
 
@@ -32,7 +51,8 @@ def _scheme2str(node: SchemeData) -> str:
 
 @dataclass(frozen=True, slots=True)
 class Similarity:
-    nlp: nlp_service.Nlp
+    config: nlp_service.NlpConfig
+    limit: int | None
     mapping_algorithm: retrieval_pb2.MappingAlgorithm
     mapping_algorithm_variant: int
     scheme_handling: retrieval_pb2.SchemeHandling
@@ -71,7 +91,7 @@ class Similarity:
         cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
         float,
     ]:
-        return cbrkit.sim.transpose_value(self.nlp.similarity)
+        return cbrkit.sim.transpose_value(nlp_with_models.sim_func(self.config))
 
     @property
     def graph_fac(
@@ -83,15 +103,9 @@ class Similarity:
         node_sim_func = cbrkit.sim.transpose_value(
             cbrkit.sim.type_table(
                 {
-                    str: self.nlp.similarity,
+                    str: nlp_without_models.sim_func(self.config),
                     SchemeData: self.scheme,
                 },
-                default=cbrkit.sim.generic.static(0.0),
-            )
-        )
-        precompute_nodes_func = cbrkit.sim.transpose_value(
-            cbrkit.sim.type_table(
-                {str: self.nlp.similarity},
                 default=cbrkit.sim.generic.static(0.0),
             )
         )
@@ -111,8 +125,6 @@ class Similarity:
                             selection_func=cbrkit.sim.graphs.astar.select1(),
                             init_func=cbrkit.sim.graphs.astar.init1(),
                             queue_limit=queue_limit,
-                            precompute_nodes_func=precompute_nodes_func,
-                            multiprocessing=True,
                         )
                     case 2:
                         return cbrkit.sim.graphs.astar.build(
@@ -121,8 +133,6 @@ class Similarity:
                             selection_func=cbrkit.sim.graphs.astar.select2(),
                             init_func=cbrkit.sim.graphs.astar.init1(),
                             queue_limit=queue_limit,
-                            precompute_nodes_func=precompute_nodes_func,
-                            multiprocessing=True,
                         )
                     case 3:
                         return cbrkit.sim.graphs.astar.build(
@@ -133,8 +143,6 @@ class Similarity:
                             ),
                             init_func=cbrkit.sim.graphs.astar.init2(),
                             queue_limit=queue_limit,
-                            precompute_nodes_func=precompute_nodes_func,
-                            multiprocessing=True,
                         )
 
                 raise ValueError(
@@ -155,9 +163,16 @@ class Similarity:
         cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
         float,
     ]:
-        return cbrkit.retrieval.transpose_value(self.nlp.retrieval)
+        retriever = cbrkit.retrieval.transpose_value(
+            nlp_with_models.retrieval_func(self.config)
+        )
 
-    @property
+        if self.limit is not None:
+            return cbrkit.retrieval.dropout(retriever, limit=self.limit)
+
+        return retriever
+
+    # no property, this should be a factory that lazily loads the embedding cache
     def retriever_fac(
         self,
     ) -> cbrkit.typing.RetrieverFunc[
@@ -165,4 +180,30 @@ class Similarity:
         cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
         cbrkit.sim.graphs.GraphSim[KeyType],
     ]:
-        return cbrkit.retrieval.build(self.graph_fac)
+        retriever = cbrkit.retrieval.build(
+            self.graph_fac, multiprocessing=True, chunksize=1
+        )
+
+        if self.limit is not None:
+            return cbrkit.retrieval.dropout(retriever, limit=self.limit)
+
+        return retriever
+
+    @property
+    def retriever_fac_precompute(
+        self,
+    ) -> cbrkit.typing.RetrieverFunc[
+        KeyType,
+        cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
+        float,
+    ]:
+        precompute_nodes_func = cbrkit.sim.transpose_value(
+            cbrkit.sim.type_table(
+                {str: nlp_with_models.sim_func(self.config)},
+                default=cbrkit.sim.generic.static(0.0),
+            )
+        )
+
+        return cbrkit.retrieval.build(
+            cbrkit.sim.graphs.precompute(precompute_nodes_func)
+        )
