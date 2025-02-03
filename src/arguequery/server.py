@@ -73,7 +73,7 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             retrievers: cbrkit.typing.MaybeFactories[
                 cbrkit.typing.RetrieverFunc[
                     KeyType,
-                    cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
+                    cbrkit.model.graph.Graph[KeyType, NodeData, EdgeData, GraphData],
                     float | cbrkit.sim.graphs.GraphSim[KeyType],
                 ]
             ] = []

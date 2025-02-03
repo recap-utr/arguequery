@@ -88,7 +88,7 @@ class Similarity:
     def graph_mac(
         self,
     ) -> cbrkit.typing.AnySimFunc[
-        cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
+        cbrkit.model.graph.Graph[KeyType, NodeData, EdgeData, GraphData],
         float,
     ]:
         return cbrkit.sim.transpose_value(nlp_with_models.sim_func(self.config))
@@ -97,17 +97,15 @@ class Similarity:
     def graph_fac(
         self,
     ) -> cbrkit.typing.AnySimFunc[
-        cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
+        cbrkit.model.graph.Graph[KeyType, NodeData, EdgeData, GraphData],
         cbrkit.sim.graphs.GraphSim[KeyType],
     ]:
-        node_sim_func = cbrkit.sim.transpose_value(
-            cbrkit.sim.type_table(
-                {
-                    str: nlp_without_models.sim_func(self.config),
-                    SchemeData: self.scheme,
-                },
-                default=cbrkit.sim.generic.static(0.0),
-            )
+        node_sim_func = cbrkit.sim.type_table(
+            {
+                str: nlp_without_models.sim_func(self.config),
+                SchemeData: self.scheme,
+            },
+            default=cbrkit.sim.generic.static(0.0),
         )
 
         match self.mapping_algorithm:
@@ -160,7 +158,7 @@ class Similarity:
         self,
     ) -> cbrkit.typing.RetrieverFunc[
         KeyType,
-        cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
+        cbrkit.model.graph.Graph[KeyType, NodeData, EdgeData, GraphData],
         float,
     ]:
         retriever = cbrkit.retrieval.transpose_value(
@@ -172,12 +170,15 @@ class Similarity:
 
         return retriever
 
+    # TODO: Maybe the similarity function should be a factory instead?
+    # In that case, each process would load the model separately
+    # Currently, it is loaded once and pickled for each process
     # no property, this should be a factory that lazily loads the embedding cache
     def retriever_fac(
         self,
     ) -> cbrkit.typing.RetrieverFunc[
         KeyType,
-        cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
+        cbrkit.model.graph.Graph[KeyType, NodeData, EdgeData, GraphData],
         cbrkit.sim.graphs.GraphSim[KeyType],
     ]:
         retriever = cbrkit.retrieval.build(
@@ -194,14 +195,12 @@ class Similarity:
         self,
     ) -> cbrkit.typing.RetrieverFunc[
         KeyType,
-        cbrkit.sim.graphs.Graph[KeyType, NodeData, EdgeData, GraphData],
+        cbrkit.model.graph.Graph[KeyType, NodeData, EdgeData, GraphData],
         float,
     ]:
-        precompute_nodes_func = cbrkit.sim.transpose_value(
-            cbrkit.sim.type_table(
-                {str: nlp_with_models.sim_func(self.config)},
-                default=cbrkit.sim.generic.static(0.0),
-            )
+        precompute_nodes_func = cbrkit.sim.type_table(
+            {str: nlp_with_models.sim_func(self.config)},
+            default=cbrkit.sim.generic.static(0.0),
         )
 
         return cbrkit.retrieval.build(
