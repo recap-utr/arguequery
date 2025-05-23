@@ -51,7 +51,7 @@ def _scheme2str(node: SchemeData) -> str:
 
 @dataclass(frozen=True, slots=True)
 class Similarity:
-    config: nlp_service.NlpConfig
+    config: nlp_service.model.NlpConfig
     limit: int | None
     mapping_algorithm: retrieval_pb2.MappingAlgorithm
     mapping_algorithm_variant: int
@@ -105,8 +105,8 @@ class Similarity:
                 str: nlp_without_models.sim_func(self.config),
                 SchemeData: self.scheme,
             },
-            default=cbrkit.sim.generic.static(0.0),
         )
+        node_matcher = cbrkit.sim.graphs.type_element_matcher
 
         match self.mapping_algorithm:
             case retrieval_pb2.MAPPING_ALGORITHM_ASTAR:
@@ -118,42 +118,58 @@ class Similarity:
                 match self.mapping_algorithm_variant:
                     case 1:
                         return cbrkit.sim.graphs.astar.build(
-                            past_cost_func=cbrkit.sim.graphs.astar.g1(node_sim_func),
-                            future_cost_func=cbrkit.sim.graphs.astar.h1(),
+                            node_sim_func=node_sim_func,
+                            node_matcher=node_matcher,
+                            heuristic_func=cbrkit.sim.graphs.astar.h1(),
                             selection_func=cbrkit.sim.graphs.astar.select1(),
                             init_func=cbrkit.sim.graphs.astar.init1(),
-                            queue_limit=queue_limit,
+                            beam_width=queue_limit,
                         )
                     case 2:
                         return cbrkit.sim.graphs.astar.build(
-                            past_cost_func=cbrkit.sim.graphs.astar.g1(node_sim_func),
-                            future_cost_func=cbrkit.sim.graphs.astar.h2(node_sim_func),
+                            node_sim_func=node_sim_func,
+                            node_matcher=node_matcher,
+                            heuristic_func=cbrkit.sim.graphs.astar.h2(),
                             selection_func=cbrkit.sim.graphs.astar.select2(),
                             init_func=cbrkit.sim.graphs.astar.init1(),
-                            queue_limit=queue_limit,
+                            beam_width=queue_limit,
                         )
                     case 3:
                         return cbrkit.sim.graphs.astar.build(
-                            past_cost_func=cbrkit.sim.graphs.astar.g1(node_sim_func),
-                            future_cost_func=cbrkit.sim.graphs.astar.h3(node_sim_func),
-                            selection_func=cbrkit.sim.graphs.astar.select3(
-                                cbrkit.sim.graphs.astar.h3(node_sim_func)
-                            ),
+                            node_sim_func=node_sim_func,
+                            node_matcher=node_matcher,
+                            heuristic_func=cbrkit.sim.graphs.astar.h3(),
+                            selection_func=cbrkit.sim.graphs.astar.select3(),
                             init_func=cbrkit.sim.graphs.astar.init2(),
-                            queue_limit=queue_limit,
+                            beam_width=queue_limit,
                         )
 
                 raise ValueError(
                     f"Unknown mapping_algorithm_variant: {self.mapping_algorithm_variant}"
                 )
             case retrieval_pb2.MAPPING_ALGORITHM_BRUTE_FORCE:
-                return cbrkit.sim.graphs.brute_force(node_sim_func)
+                return cbrkit.sim.graphs.brute_force(node_sim_func, node_matcher)
             case retrieval_pb2.MAPPING_ALGORITHM_ISOMORPHISM:
-                return cbrkit.sim.graphs.isomorphism(node_sim_func=node_sim_func)
+                return cbrkit.sim.graphs.isomorphism(node_sim_func, node_matcher)
+            case retrieval_pb2.MAPPING_ALGORITHM_EDIT_PATHS:
+                return cbrkit.sim.graphs.ged(node_sim_func, node_matcher)
+            case retrieval_pb2.MAPPING_ALGORITHM_GREEDY:
+                match self.mapping_algorithm_variant:
+                    case 1:
+                        return cbrkit.sim.graphs.greedy(
+                            node_sim_func, node_matcher, start_with="nodes"
+                        )
+                    case 2:
+                        return cbrkit.sim.graphs.greedy(
+                            node_sim_func, node_matcher, start_with="edges"
+                        )
+
+                raise ValueError(
+                    f"Unknown mapping_algorithm_variant: {self.mapping_algorithm_variant}"
+                )
             case _:
                 raise ValueError(f"Unknown mapping_algorithm: {self.mapping_algorithm}")
 
-    @property
     def retriever_mac(
         self,
     ) -> cbrkit.typing.RetrieverFunc[
@@ -170,10 +186,6 @@ class Similarity:
 
         return retriever
 
-    # TODO: Maybe the similarity function should be a factory instead?
-    # In that case, each process would load the model separately
-    # Currently, it is loaded once and pickled for each process
-    # no property, this should be a factory that lazily loads the embedding cache
     def retriever_fac(
         self,
     ) -> cbrkit.typing.RetrieverFunc[
@@ -190,7 +202,6 @@ class Similarity:
 
         return retriever
 
-    @property
     def retriever_fac_precompute(
         self,
     ) -> cbrkit.typing.RetrieverFunc[
@@ -198,11 +209,11 @@ class Similarity:
         cbrkit.model.graph.Graph[KeyType, NodeData, EdgeData, GraphData],
         float,
     ]:
-        precompute_nodes_func = cbrkit.sim.type_table(
-            {str: nlp_with_models.sim_func(self.config)},
-            default=cbrkit.sim.generic.static(0.0),
-        )
-
         return cbrkit.retrieval.build(
-            cbrkit.sim.graphs.precompute(precompute_nodes_func)
+            cbrkit.sim.graphs.precompute(
+                node_sim_func=cbrkit.sim.type_table(
+                    {str: nlp_with_models.sim_func(self.config)},
+                ),
+                node_matcher=cbrkit.sim.graphs.type_element_matcher,
+            )
         )
