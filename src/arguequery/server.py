@@ -30,41 +30,42 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
         query = load_graph(request.query)
 
         result = cbrkit.retrieval.apply_query(cases, query, retriever)
+        response = retrieval_pb2.SimilaritiesResponse()
 
-        return retrieval_pb2.SimilaritiesResponse(
-            similarities=[
+        for case_key in result.ranking:
+            sim = result.similarities[case_key]
+            response.similarities.append(
                 retrieval_pb2.SimilarityResponse(
-                    semantic_similarity=cbrkit.helpers.unpack_float(sim)
-                    if not request.structural
-                    else None,
-                    structural_similarity=cbrkit.helpers.unpack_float(sim)
-                    if request.structural
-                    else None,
-                    structural_mapping=[
-                        retrieval_pb2.RetrievedMapping(
-                            case=retrieval_pb2.RetrievedCase(
-                                id=case_key,
-                                similarity=cbrkit.helpers.unpack_float(sim),
-                                graph=request_cases[case_key],
-                            ),
-                            node_mappings=[
-                                retrieval_pb2.MappedElement(
-                                    query_id=query_node,
-                                    case_id=case_node,
-                                    similarity=cbrkit.helpers.unpack_float(
-                                        sim.node_similarities[query_node]
-                                    ),
-                                )
-                            ],
-                        )
-                        for query_node, case_node in sim.node_mapping.items()
-                    ]
+                    similarity=cbrkit.helpers.unpack_float(sim),
+                    mapping=retrieval_pb2.RetrievedMapping(
+                        id=case_key,
+                        node_mappings=[
+                            retrieval_pb2.MappedElement(
+                                query_id=query_node,
+                                case_id=case_node,
+                                similarity=cbrkit.helpers.unpack_float(
+                                    sim.node_similarities[query_node]
+                                ),
+                            )
+                            for query_node, case_node in sim.node_mapping.items()
+                        ],
+                        edge_mappings=[
+                            retrieval_pb2.MappedElement(
+                                query_id=query_edge,
+                                case_id=case_edge,
+                                similarity=cbrkit.helpers.unpack_float(
+                                    sim.edge_similarities[query_edge]
+                                ),
+                            )
+                            for query_edge, case_edge in sim.edge_mapping.items()
+                        ],
+                    )
                     if isinstance(sim, cbrkit.sim.graphs.GraphSim)
-                    else [],
+                    else None,
                 )
-                for case_key, sim in result.similarities.items()
-            ]
-        )
+            )
+
+        return response
 
     def Retrieve(
         self, request: retrieval_pb2.RetrieveRequest, context: grpc.ServicerContext
@@ -97,64 +98,79 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             cases = {key: load_graph(value) for key, value in request.cases.items()}
 
             result = cbrkit.retrieval.apply_queries(cases, queries, retrievers)
+            response = retrieval_pb2.RetrieveResponse()
 
-            return retrieval_pb2.RetrieveResponse(
-                query_responses={
-                    query_key: retrieval_pb2.QueryResponse(
-                        semantic_ranking=[
-                            retrieval_pb2.RetrievedCase(
-                                id=case_key,
-                                similarity=cbrkit.helpers.unpack_float(sim),
-                                graph=request.cases[case_key],
-                            )
-                            for case_key, sim in result.steps[0]
-                            .queries[query_key]
-                            .similarities.items()
-                        ]
-                        if request.semantic_retrieval
-                        else [],
-                        structural_ranking=[
-                            retrieval_pb2.RetrievedCase(
-                                id=case_key,
-                                similarity=cbrkit.helpers.unpack_float(sim),
-                                graph=request.cases[case_key],
-                            )
-                            for case_key, sim in result.steps[-1]
-                            .queries[query_key]
-                            .similarities.items()
-                        ]
-                        if request.structural_retrieval
-                        else [],
-                        structural_mapping=[
-                            retrieval_pb2.RetrievedMapping(
-                                case=retrieval_pb2.RetrievedCase(
-                                    id=case_key,
-                                    similarity=cbrkit.helpers.unpack_float(sim),
-                                    graph=request.cases[case_key],
-                                ),
-                                node_mappings=[
-                                    retrieval_pb2.MappedElement(
-                                        query_id=query_node,
-                                        case_id=case_node,
-                                        similarity=cbrkit.helpers.unpack_float(
-                                            sim.node_similarities[query_node]
-                                        ),
-                                    )
-                                    for query_node, case_node in sim.node_mapping.items()
-                                ]
-                                if isinstance(sim, cbrkit.sim.graphs.GraphSim)
-                                else [],
-                            )
-                            for case_key, sim in result.steps[-1]
-                            .queries[query_key]
-                            .similarities.items()
-                        ]
-                        if len(result.steps) == 2
-                        else [],
+            for query_key in request.queries.keys():
+                query_response = response.query_responses[query_key]
+                semantic_result = (
+                    result.steps[0].queries[query_key]
+                    if request.semantic_retrieval
+                    else None
+                )
+                structural_result = (
+                    result.steps[-1].queries[query_key]
+                    if request.structural_retrieval
+                    else None
+                )
+
+                if semantic_result:
+                    query_response.semantic_ranking.extend(
+                        retrieval_pb2.RetrievedCase(
+                            id=case_key,
+                            similarity=cbrkit.helpers.unpack_float(
+                                semantic_result.similarities[case_key]
+                            ),
+                            graph=request.cases[case_key],
+                        )
+                        for case_key in semantic_result.ranking
                     )
-                    for query_key in request.queries.keys()
-                }
-            )
+
+                if structural_result:
+                    query_response.structural_ranking.extend(
+                        retrieval_pb2.RetrievedCase(
+                            id=case_key,
+                            similarity=cbrkit.helpers.unpack_float(
+                                structural_result.similarities[case_key]
+                            ),
+                            graph=request.cases[case_key],
+                        )
+                        for case_key in structural_result.ranking
+                    )
+
+                    query_response.structural_mapping.extend(
+                        retrieval_pb2.RetrievedMapping(
+                            id=case_key,
+                            node_mappings=[
+                                retrieval_pb2.MappedElement(
+                                    query_id=query_node,
+                                    case_id=case_node,
+                                    similarity=cbrkit.helpers.unpack_float(
+                                        sim.node_similarities[query_node]
+                                    ),
+                                )
+                                for query_node, case_node in sim.node_mapping.items()
+                            ]
+                            if (sim := structural_result.similarities[case_key])
+                            and isinstance(sim, cbrkit.sim.graphs.GraphSim)
+                            else [],
+                            edge_mappings=[
+                                retrieval_pb2.MappedElement(
+                                    query_id=query_edge,
+                                    case_id=case_edge,
+                                    similarity=cbrkit.helpers.unpack_float(
+                                        sim.edge_similarities[query_edge]
+                                    ),
+                                )
+                                for query_edge, case_edge in sim.edge_mapping.items()
+                            ]
+                            if (sim := structural_result.similarities[case_key])
+                            and isinstance(sim, cbrkit.sim.graphs.GraphSim)
+                            else [],
+                        )
+                        for case_key in structural_result.ranking
+                    )
+
+            return response
         except Exception as e:
             import traceback
 

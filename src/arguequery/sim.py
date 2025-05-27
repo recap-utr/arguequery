@@ -224,6 +224,7 @@ class Similarity:
             cbrkit.sim.graphs.precompute(
                 node_sim_func=cbrkit.sim.type_table(
                     {str: nlp_with_models.sim_func(self.config)},
+                    default=0.0,
                 ),
                 node_matcher=self.node_matcher,
             )

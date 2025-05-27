@@ -141,7 +141,7 @@ wheels = [
 
 [[package]]
 name = "arg-services"
-version = "1.7.8"
+version = "1.7.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grpc-stubs" },
@@ -150,9 +150,9 @@ dependencies = [
     { name = "protobuf" },
     { name = "types-protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/9c/e08fd79560b578040765755f0b7b9c382b644abc741db33833e5dafc0eab/arg_services-1.7.8.tar.gz", hash = "sha256:5393a59cd593ea4004fa454887dca9a66f7c780894cd3cb9db09ede4207e10e3", size = 45972, upload-time = "2025-05-23T20:37:48.542Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/89/c8/3be18859286c948c0f358b4b0f4c6c31d14590d04ec220fd448615a65969/arg_services-1.7.9.tar.gz", hash = "sha256:a85131584efec131a7042c3ff443129889350fcf64044c7950872bba602403d0", size = 45884, upload-time = "2025-05-27T13:31:19.459Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7b/87/3126c8a4ac7d8f40c69c145dcbe863b3e6781734cb585adb445d4c221add/arg_services-1.7.8-py3-none-any.whl", hash = "sha256:3937899ba0d9b9cddd4d22cb7ce0f888d1fab8e372efe6ac414582490b966023", size = 100657, upload-time = "2025-05-23T20:37:46.126Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/f4/2857fd0478265ad173dc003ffd8783fd16a70dc95ca5f2c5bebbe1dff805/arg_services-1.7.9-py3-none-any.whl", hash = "sha256:176346a438f4d9f01ef8e20d6591d336a92b50072a3aad420f70825614956fb3", size = 100645, upload-time = "2025-05-27T13:31:17.856Z" },
 ]
 
 [[package]]
