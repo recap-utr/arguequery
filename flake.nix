@@ -16,6 +16,7 @@
         {
           pkgs,
           lib,
+          config,
           ...
         }:
         {
@@ -32,6 +33,11 @@
               uv sync --all-extras --locked
             '';
           };
+          devShells.orbstack = config.devShells.default.overrideAttrs (oldAttrs: {
+            UV_LINK_MODE = "copy";
+            UV_PREVIEW = true; # https://github.com/astral-sh/uv/issues/11819
+            UV_PROJECT_ENVIRONMENT = ".venv-orbstack";
+          });
         };
     };
 }

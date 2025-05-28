@@ -294,3 +294,4 @@ $RECYCLE.BIN/
 # End of https://www.gitignore.io/api/linux,macos,python,windows,intellij,visualstudiocode
 
 /data/
+.venv-orbstack
