@@ -25,9 +25,13 @@ from arguequery.model import (
 #         SentenceTransformer(model_name, device="cuda" if is_cuda_available() else "cpu")
 #     )
 
+
 nlp_with_models = nlp_service.Nlp(
     cache_dir=Path("data"),
     autodump=True,
+    # provider_init={
+    #     nlp_service.model.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: sentence_transformer_init,
+    # },
 )
 nlp_without_models = nlp_service.Nlp(
     cache_dir=Path("data"),
@@ -112,47 +116,40 @@ class Similarity:
 
         match self.mapping_algorithm:
             case retrieval_pb2.MAPPING_ALGORITHM_ASTAR:
-                beam_width = 10000
-                pathlength_weight = 0
-
-                if "astar_beam_width" in self.extras:
-                    beam_width = int(cast(float, self.extras["astar_beam_width"]))
-
-                if "astar_pathlength_weight" in self.extras:
-                    pathlength_weight = int(
-                        cast(float, self.extras["astar_pathlength_weight"])
-                    )
+                astar_func = functools.partial(
+                    cbrkit.sim.graphs.astar.build,
+                    node_sim_func=node_sim_func,
+                    node_matcher=self.node_matcher,
+                    beam_width=(
+                        0
+                        if "astar_beam_width" not in self.extras
+                        else int(cast(float, self.extras["astar_beam_width"]))
+                    ),
+                    pathlength_weight=(
+                        0
+                        if "astar_pathlength_weight" not in self.extras
+                        else int(cast(float, self.extras["astar_pathlength_weight"]))
+                    ),
+                )
 
                 match self.mapping_algorithm_variant:
                     case 1:
-                        return cbrkit.sim.graphs.astar.build(
-                            node_sim_func=node_sim_func,
-                            node_matcher=self.node_matcher,
+                        return astar_func(
                             heuristic_func=cbrkit.sim.graphs.astar.h1(),
                             selection_func=cbrkit.sim.graphs.astar.select1(),
                             init_func=cbrkit.sim.graphs.astar.init1(),
-                            beam_width=beam_width,
-                            pathlength_weight=pathlength_weight,
                         )
                     case 2:
-                        return cbrkit.sim.graphs.astar.build(
-                            node_sim_func=node_sim_func,
-                            node_matcher=self.node_matcher,
+                        return astar_func(
                             heuristic_func=cbrkit.sim.graphs.astar.h2(),
                             selection_func=cbrkit.sim.graphs.astar.select2(),
                             init_func=cbrkit.sim.graphs.astar.init1(),
-                            beam_width=beam_width,
-                            pathlength_weight=pathlength_weight,
                         )
                     case 3:
-                        return cbrkit.sim.graphs.astar.build(
-                            node_sim_func=node_sim_func,
-                            node_matcher=self.node_matcher,
+                        return astar_func(
                             heuristic_func=cbrkit.sim.graphs.astar.h3(),
                             selection_func=cbrkit.sim.graphs.astar.select3(),
                             init_func=cbrkit.sim.graphs.astar.init2(),
-                            beam_width=beam_width,
-                            pathlength_weight=pathlength_weight,
                         )
 
                 raise ValueError(
