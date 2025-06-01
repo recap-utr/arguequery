@@ -17,26 +17,15 @@ from arguequery.model import (
     SchemeData,
 )
 
-# def sentence_transformer_init(
-#     model_name: str,
-# ) -> cbrkit.typing.BatchConversionFunc[str, cbrkit.typing.NumpyArray]:
-#     # mps has issues with multiprocessing on macos
-#     return cbrkit.sim.embed.sentence_transformers(
-#         SentenceTransformer(model_name, device="cuda" if is_cuda_available() else "cpu")
-#     )
-
-
 nlp_with_models = nlp_service.Nlp(
     cache_dir=Path("data"),
     autodump=True,
-    # provider_init={
-    #     nlp_service.model.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: sentence_transformer_init,
-    # },
 )
 nlp_without_models = nlp_service.Nlp(
     cache_dir=Path("data"),
     autodump=False,
     provider_init=None,
+    provider_cache=False,
 )
 
 

@@ -1380,7 +1380,7 @@ wheels = [
 
 [[package]]
 name = "nlp-service"
-version = "2.0.1"
+version = "2.0.2"
 source = { editable = "../nlp-service" }
 dependencies = [
     { name = "arg-services" },
