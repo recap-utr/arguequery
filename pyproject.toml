@@ -10,10 +10,8 @@ dependencies = [
     "cbrkit[graphs]>=0,<1",
     "nlp-service[all]>=2,<3",
     "pyyaml>=6,<7",
-    "transformers>=4,<4.52",
     "typer>=0,<1",
 ]
-# TODO: unpin transformers once this has been released: https://github.com/huggingface/transformers/pull/38376
 
 [project.scripts]
 arguequery = "arguequery.server:app"

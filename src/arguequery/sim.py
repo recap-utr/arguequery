@@ -160,13 +160,13 @@ class Similarity:
                     node_sim_func,
                     node_matcher=self.node_matcher,
                 )
-            case retrieval_pb2.MAPPING_ALGORITHM_ISOMORPHISM:
-                return cbrkit.sim.graphs.isomorphism(
+            case retrieval_pb2.MAPPING_ALGORITHM_VF2:
+                return cbrkit.sim.graphs.vf2(
                     node_sim_func,
                     node_matcher=self.node_matcher,
                 )
-            case retrieval_pb2.MAPPING_ALGORITHM_EDIT_PATHS:
-                return cbrkit.sim.graphs.ged(
+            case retrieval_pb2.MAPPING_ALGORITHM_DFS:
+                return cbrkit.sim.graphs.dfs(
                     node_sim_func,
                     node_matcher=self.node_matcher,
                 )
@@ -174,6 +174,14 @@ class Similarity:
                 return cbrkit.sim.graphs.greedy(
                     node_sim_func,
                     node_matcher=self.node_matcher,
+                )
+            case retrieval_pb2.MAPPING_ALGORITHM_LSAP:
+                return cbrkit.sim.graphs.lsap(
+                    node_sim_func,
+                    node_matcher=self.node_matcher,
+                    variant="dense"
+                    if self.mapping_algorithm_variant == 1
+                    else "sparse",
                 )
             case _:
                 raise ValueError(f"Unknown mapping_algorithm: {self.mapping_algorithm}")
