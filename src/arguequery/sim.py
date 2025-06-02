@@ -168,9 +168,6 @@ class Similarity:
                 return cbrkit.sim.graphs.lap(
                     node_sim_func,
                     node_matcher=self.node_matcher,
-                    variant="dense"
-                    if self.mapping_algorithm_variant == 1
-                    else "sparse",
                 )
             case _:
                 raise ValueError(f"Unknown mapping_algorithm: {self.mapping_algorithm}")
