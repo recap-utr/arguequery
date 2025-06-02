@@ -165,7 +165,7 @@ class Similarity:
                     node_matcher=self.node_matcher,
                 )
             case retrieval_pb2.MAPPING_ALGORITHM_LSAP:
-                return cbrkit.sim.graphs.lsap(
+                return cbrkit.sim.graphs.lap(
                     node_sim_func,
                     node_matcher=self.node_matcher,
                     variant="dense"
