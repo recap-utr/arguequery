@@ -126,19 +126,19 @@ class Similarity:
                         return astar_func(
                             heuristic_func=cbrkit.sim.graphs.astar.h1(),
                             selection_func=cbrkit.sim.graphs.astar.select1(),
-                            init_func=cbrkit.sim.graphs.astar.init1(),
+                            init_func=cbrkit.sim.graphs.init_empty(),
                         )
                     case 2:
                         return astar_func(
                             heuristic_func=cbrkit.sim.graphs.astar.h2(),
                             selection_func=cbrkit.sim.graphs.astar.select2(),
-                            init_func=cbrkit.sim.graphs.astar.init1(),
+                            init_func=cbrkit.sim.graphs.init_empty(),
                         )
                     case 3:
                         return astar_func(
                             heuristic_func=cbrkit.sim.graphs.astar.h3(),
                             selection_func=cbrkit.sim.graphs.astar.select3(),
-                            init_func=cbrkit.sim.graphs.astar.init2(),
+                            init_func=cbrkit.sim.graphs.init_unique_matches(),
                         )
 
                 raise ValueError(
