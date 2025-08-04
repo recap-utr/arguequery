@@ -18,12 +18,10 @@ from arguequery.model import (
 )
 
 nlp_with_models = nlp_service.Nlp(
-    cache_dir=Path("data"),
-    autodump=True,
+    cache_path=Path("data/embeddings.sqlite3"),
 )
 nlp_without_models = nlp_service.Nlp(
-    cache_dir=Path("data"),
-    autodump=False,
+    cache_path=Path("data/embeddings.sqlite3"),
     provider_init=None,
     provider_cache=False,
 )
