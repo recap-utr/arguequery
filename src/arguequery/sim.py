@@ -138,6 +138,12 @@ class Similarity:
                             selection_func=cbrkit.sim.graphs.astar.select3(),
                             init_func=cbrkit.sim.graphs.init_unique_matches(),
                         )
+                    case 4:
+                        return astar_func(
+                            heuristic_func=cbrkit.sim.graphs.astar.h4(),
+                            selection_func=cbrkit.sim.graphs.astar.select4(),
+                            init_func=cbrkit.sim.graphs.init_unique_matches(),
+                        )
 
                 raise ValueError(
                     f"Unknown mapping_algorithm_variant: {self.mapping_algorithm_variant}"
