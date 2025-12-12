@@ -200,7 +200,10 @@ class Similarity:
         cbrkit.sim.graphs.GraphSim[KeyType],
     ]:
         retriever = cbrkit.retrieval.build(
-            self.graph_fac, multiprocessing=True, chunksize=1
+            self.graph_fac,
+            multiprocessing=False,
+            # if using multiprocessing, set chunksize to 1
+            # chunksize=1,
         )
 
         if self.limit is not None:
