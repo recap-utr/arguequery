@@ -325,7 +325,7 @@ wheels = [
 
 [[package]]
 name = "cbrkit"
-version = "0.28.9"
+version = "1.0.0"
 source = { editable = "../../wi2trier/cbrkit" }
 dependencies = [
     { name = "frozendict" },
@@ -1986,9 +1986,9 @@ all = [
 
 [package.metadata]
 requires-dist = [
-    { name = "arg-services", specifier = ">=1.7.7,<2" },
+    { name = "arg-services", specifier = ">=1.7.10,<2" },
     { name = "cbrkit", extras = ["llm", "transformers"], marker = "extra == 'all'" },
-    { name = "cbrkit", extras = ["nlp"], specifier = ">=0.28.5,<1" },
+    { name = "cbrkit", extras = ["nlp"], specifier = ">=1,<2" },
     { name = "numba", specifier = ">=0.61,<1" },
     { name = "tensorflow", marker = "extra == 'all'", specifier = ">=2,<3" },
     { name = "tensorflow-hub", marker = "extra == 'all'", specifier = ">=0.16,<1" },
