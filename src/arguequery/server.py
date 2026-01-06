@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import arg_services
 import cbrkit
 import grpc
@@ -8,7 +10,10 @@ from .model import EdgeData, GraphData, KeyType, NodeData, load_graph
 from .sim import Similarity
 
 
+@dataclass(slots=True)
 class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
+    multiprocessing: bool
+
     def Similarities(
         self, request: retrieval_pb2.SimilaritiesRequest, context: grpc.ServicerContext
     ) -> retrieval_pb2.SimilaritiesResponse:
@@ -19,6 +24,7 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             request.mapping_algorithm_variant,
             request.scheme_handling,
             request.extras,
+            self.multiprocessing,
         )
 
         retriever = (
@@ -85,6 +91,7 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
                 request.mapping_algorithm_variant,
                 request.scheme_handling,
                 request.extras,
+                self.multiprocessing,
             )
 
             if request.semantic_retrieval:
@@ -180,18 +187,17 @@ class RetrievalService(retrieval_pb2_grpc.RetrievalServiceServicer):
             raise e
 
 
-def add_services(server: grpc.Server):
-    retrieval_pb2_grpc.add_RetrievalServiceServicer_to_server(
-        RetrievalService(), server
-    )
-
-
 app = Typer()
 
 
 @app.command()
-def main(address: str = "localhost:50200"):
+def main(address: str = "localhost:50200", multiprocessing: bool = False):
     """Main entry point for the server."""
+
+    def add_services(server: grpc.Server):
+        retrieval_pb2_grpc.add_RetrievalServiceServicer_to_server(
+            RetrievalService(multiprocessing), server
+        )
 
     arg_services.serve(
         address,

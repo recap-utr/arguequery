@@ -48,6 +48,7 @@ class Similarity:
     mapping_algorithm_variant: int
     scheme_handling: retrieval_pb2.SchemeHandling
     extras: Struct
+    multiprocessing: bool
 
     def node_matcher(self, x: NodeData, y: NodeData) -> bool:
         return type(x) is type(y)
@@ -201,9 +202,8 @@ class Similarity:
     ]:
         retriever = cbrkit.retrieval.build(
             self.graph_fac,
-            multiprocessing=False,
-            # if using multiprocessing, set chunksize to 1
-            # chunksize=1,
+            multiprocessing=self.multiprocessing,
+            chunksize=1 if self.multiprocessing else 0,
         )
 
         if self.limit is not None:

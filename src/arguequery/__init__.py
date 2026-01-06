@@ -1,4 +1,7 @@
 import logging
+import multiprocessing as mp
+
+mp.set_start_method("forkserver")
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
