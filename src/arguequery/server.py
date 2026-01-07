@@ -203,4 +203,8 @@ def main(address: str = "localhost:50200", multiprocessing: bool = False):
         address,
         add_services,
         [arg_services.full_service_name(retrieval_pb2, "RetrievalService")],
+        options={
+            "grpc.max_send_message_length": -1,
+            "grpc.max_receive_message_length": -1,
+        },
     )
