@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-import arguebuf
 import cbrkit
 import nlp_service
 from arg_services.cbr.v1beta import retrieval_pb2
@@ -28,16 +27,15 @@ nlp_without_models = nlp_service.Nlp(
 
 
 @functools.cache
-def _scheme2value(node: SchemeData) -> arguebuf.Scheme | None:
-    return node.scheme
-
-
-@functools.cache
 def _scheme2str(node: SchemeData) -> str:
     if node.scheme is None:
         return ""
 
     return node.scheme.name.lower().replace("_", " ")
+
+
+def _scheme_sim_binary(x: SchemeData, y: SchemeData) -> float:
+    return 1.0 if x.scheme == y.scheme else 0.5
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,9 +57,11 @@ class Similarity:
             case retrieval_pb2.SCHEME_HANDLING_UNSPECIFIED:
                 return cbrkit.sim.generic.static(1.0)
             case retrieval_pb2.SCHEME_HANDLING_BINARY:
+                return _scheme_sim_binary
+            case retrieval_pb2.SCHEME_HANDLING_EXACT:
                 return cbrkit.sim.transpose(
-                    cbrkit.sim.generic.type_equality(),
-                    _scheme2value,
+                    cbrkit.sim.generic.equality(),
+                    _scheme2str,
                 )
             case retrieval_pb2.SCHEME_HANDLING_TAXONOMY:
                 return cbrkit.sim.transpose(
@@ -70,11 +70,6 @@ class Similarity:
                         cbrkit.sim.taxonomy.wu_palmer(),
                     ),
                     _scheme2str,
-                )
-            case retrieval_pb2.SCHEME_HANDLING_EXACT:
-                return cbrkit.sim.transpose(
-                    cbrkit.sim.generic.equality(),
-                    _scheme2value,
                 )
 
         raise ValueError(f"Unknown scheme_handling: {self.scheme_handling}")
